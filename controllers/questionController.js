@@ -2,31 +2,44 @@
 const mongoose = require("mongoose");
 const Question = require("../models/PostSchema");
 const Notification = require("../models/notification");
+const utility = require("../config/utility")
 
 // Create a new question
 exports.createQuestion = async (req, res) => {
-  console.log(req.body);
-  const {
-    askanonymously,
-    questionTitle,
-    description,
-    category,
-    opinionFrom,
-    iage,
-  } = req.body;
   try {
-    // const newQuestion = new Question({ title, description, gender, user: req.body._id,createdBy:req.body.user._id});
+    const {
+      askanonymously,
+      questionTitle,
+      description,
+      category,
+      opinionFrom,
+    } = req.body;
+
+    const { _id, user } = req.body; // Destructure _id and user from req.body
+
     const newQuestion = new Question({
       askanonymously,
       questionTitle,
       description,
       category,
       opinionFrom,
-      user: req.body._id,
-      createdBy: req.body.user._id,
-      createdByUsername: req.body.user.username,
+      createdBy: req.body.user_id,
+      createdByUsername: req.body.username,
     });
+
+    let rowData = {};
+
     console.log("Attempting to save the question to the database");
+
+    // Handle image upload if exists in req.files
+    if (req.files && req.files.image) {
+      const imagePath = await utility.default.sendImageS3Bucket(
+        req.files.image,
+        'QuestionPost',
+        rowData.image || '' // Use existing image path if rowData.image exists
+      );
+      newQuestion.imgUrl = imagePath; // Assign image path to newQuestion
+    }
 
     const savedQuestion = await newQuestion.save();
     res.status(201).json(savedQuestion);
@@ -36,7 +49,34 @@ exports.createQuestion = async (req, res) => {
   }
 };
 
+// exports.addArtiest = async function (req, res) {
+//   try {
+//       var post = req.body;
+
+//       var rowData = {};
+//       if (post._id) {
+//           rowData = await _master2.default.getOneDb(_projectArtiest2.default, { _id: post._id });
+//       }
+
+//       if (req.files && req.files.image) {
+//           post.image = await _utility2.default.sendImageS3Bucket(req.files.image, 'artiest', rowData && rowData.image ? rowData.image : '');
+//       }
+
+//       if (post._id) {
+//           await _master2.default.updateDb(_projectArtiest2.default, { _id: post._id }, post);
+//           rowData = await _master2.default.getOneDb(_projectArtiest2.default, { _id: post._id });
+//       } else {
+//           rowData = await _master2.default.addDb(_projectArtiest2.default, post);
+//       }
+
+//       return res.send({ "code": _commonMsg2.default.sucessCODE, "msg": _commonMsg2.default.sucessMSG, "data": rowData });
+//   } catch (error) {
+//       return res.send({ "code": _commonMsg2.default.errorCODE, "msg": _commonMsg2.default.catchMsg, "error": error });
+//   }
+// };
+
 // Get all questions
+
 exports.getQuestions = async (req, res) => {
   if (req.query) {
     try {
@@ -50,6 +90,7 @@ exports.getQuestions = async (req, res) => {
     }
   }
 };
+
 exports.getAllQuestions = async (req, res) => {
   try {
     const questions = await Question.find();
@@ -164,6 +205,7 @@ exports.commentPost = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
 exports.deleteComment = async (req, res) => {
   const { postId, commentId } = req.body;
 
@@ -189,7 +231,6 @@ exports.deleteComment = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
-
 
 exports.updateComment = async (req, res) => {
   // const { } = req.query;
@@ -271,9 +312,10 @@ exports.likeComment = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
 exports.replyToComment = async (req, res) => {
   // const { postId } = req.query;
-  const { userId, content ,commentId,postId} = req.body;
+  const { userId, content ,commentId, postId } = req.body;
   try {
     const post = await Question.findById(postId);
 
@@ -293,6 +335,7 @@ exports.replyToComment = async (req, res) => {
     await post.save();
     const notification = new Notification({
       recipient: post.createdBy,
+      commentWritter: req.body.commentWritter,
       sender: userId, 
       type: 'Reply',
       postId: post._id
@@ -306,6 +349,7 @@ exports.replyToComment = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
 exports.getRepliesOfComment = async (req, res) => {
   const { commentId,postId} = req.body;
   try {

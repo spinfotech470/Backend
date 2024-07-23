@@ -4,11 +4,17 @@ const Notification = require('../models/notification')
 // Controller method to get all notifications for a user
 exports.getUserNotifications = async (req, res) => {
     
-    const userId = req.query.userId;
-    console.log("userId ",req.query.userId)
+    const userId = req.body.userId;
+    console.log("userId ",req.body.userId)
 
     try {
-        const notifications = await Notification.find({ recipient: userId })
+        // const notifications = await Notification.find({ recipient: userId })
+        const notifications = await Notification.find({
+            $or: [
+              { recipient: userId },
+              { commentWritter: userId }
+            ]
+          })
             .populate('sender', 'username') // Populate sender's username
             .populate('postId', 'questionTitle') // Populate post's question title
             .populate('commentId', 'content') // Populate comment's content (if exists)

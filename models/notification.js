@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema({
     recipient: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    commentWritter: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     type: { type: String, enum: ['Like', 'Comment','CommentLike', 'Reply'], required: true },
     postId: { type: mongoose.Schema.Types.ObjectId, ref: 'Post', required: true },

@@ -13,6 +13,6 @@ router.post('/deleteCommnet', deleteComment);
 router.post('/likeComment', likeComment);
 router.post('/replyComment', replyToComment);
 router.get('/getCommentAllReply', getRepliesOfComment);
-router.get('/notification',getUserNotifications)
+router.post('/notification',getUserNotifications)
 
 module.exports = router; 

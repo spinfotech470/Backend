@@ -106,6 +106,7 @@ exports.getAllPostsWithLikesAndComments = async (req, res) => {
                 $group: {
                     _id: '$_id',
                     askanonymously: { $first: '$askanonymously' },
+                    imgUrl: { $first: '$imgUrl' },
                     questionTitle: { $first: '$questionTitle' },
                     description: { $first: '$description' },
                     category: { $first: '$category' },

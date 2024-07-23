@@ -1,11 +1,15 @@
 const express = require('express');
 const { createQuestion, getQuestions, getAllQuestions,updateQuestion,deleteQuestion} = require('../controllers/questionController');
 const { authenticateToken } = require('../middleware/authMiddleware');
+const { getFollowersDetails } = require('../models/Aggregation/followersUserAggregation')
+
 const router = express.Router();
 
 // router.post('/', authenticateToken, createQuestion);
 router.post('/', createQuestion);
 router.get('/', getQuestions);
+router.get('/followerList', getFollowersDetails);
+
 // router.get('/Home', getAllQuestions);
 router.put('/:id', updateQuestion);
 

@@ -5,9 +5,9 @@ const Post = require('../models/PostSchema');
 
 // Signup
 exports.signup = async (req, res) => {
-    const { username, email, password, gender, dob } = req.body;
+    const { username, email, password, gender, dob, name, mobile, city, aboutMe } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ username, email, password: hashedPassword, gender, dob });
+    const user = new User({ username, email, password: hashedPassword, gender, dob, name, mobile, city, aboutMe });
 
     try {
         const savedUser = await user.save();

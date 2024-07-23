@@ -9,12 +9,23 @@ const socialAccountSchema = new mongoose.Schema({
   refreshToken: { type: String }
 });
 
-const userSchema = new mongoose.Schema({
+const followersSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   username: { type: String, required: true },
+});
+
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  username: { type: String, required: true, unique: true  },
   email: { type: String, required: true, unique: true },
   password: { type: String },
   gender: { type: String },
+  profileImg: { type: String },
+  coverImg: { type: String },
   dob: { type: Date },
+  city:{type: String},
+  aboutMe:{type: String},
+  mobile:{type: String},
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
   socialAccounts: [socialAccountSchema],
@@ -22,7 +33,8 @@ const userSchema = new mongoose.Schema({
   isActive: Boolean,
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   posts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }],
-  fellowing: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+  fellowing: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  followersDetails : [followersSchema]
 });
 
 const User = mongoose.model('User', userSchema);

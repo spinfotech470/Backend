@@ -10,12 +10,16 @@ const userRoutes = require('./routes/authRoutes');
 const homeRoutes = require('./routes/homeRoutes');
 const chatRoutes = require('./routes/chatRoutes')
 const questionRoutes = require('./routes/questionRoutes');
-const fellowRoutes = require('./routes/fellowRoutes')
+const fellowRoutes = require('./routes/fellowRoutes');
+const NewUserRoutes = require('./routes/userRoutes');
 const Message = require('./models/Message');
 const User = require('./models/User');
+const fileUpload = require('express-fileupload');
 
 const app = express();
 
+app.use(express.json()); // Parse JSON bodies
+app.use(fileUpload()); // Enable file upload middleware
 // Middleware
 app.use(cors({
   origin: '*', // Allow requests from your frontend's origin
@@ -36,7 +40,8 @@ app.use('/api/questions', questionRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api', homeRoutes);
 app.use('/api', chatRoutes);
-// app.use('/api',fellowRoutes)
+app.use('/users', fellowRoutes);
+app.use('/', NewUserRoutes)
 
 // Create HTTP server
 const server = http.createServer(app);
