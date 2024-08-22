@@ -8,7 +8,8 @@ const notificationSchema = new mongoose.Schema({
     postId: { type: mongoose.Schema.Types.ObjectId, ref: 'Post', required: true },
     commentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Comment' },
     createdAt: { type: Date, default: Date.now },
-    read: { type: Boolean, default: false }
+    read: { type: Boolean, default: false },
+    mail: { type: Boolean, default: false },
 });
 
 const Notification = mongoose.model('Notification', notificationSchema);

@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
   socialAccounts: [socialAccountSchema],
-  blockedUsers: [String],
+  blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   isActive: Boolean,
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   posts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }],

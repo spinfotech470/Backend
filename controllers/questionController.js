@@ -49,34 +49,7 @@ exports.createQuestion = async (req, res) => {
   }
 };
 
-// exports.addArtiest = async function (req, res) {
-//   try {
-//       var post = req.body;
-
-//       var rowData = {};
-//       if (post._id) {
-//           rowData = await _master2.default.getOneDb(_projectArtiest2.default, { _id: post._id });
-//       }
-
-//       if (req.files && req.files.image) {
-//           post.image = await _utility2.default.sendImageS3Bucket(req.files.image, 'artiest', rowData && rowData.image ? rowData.image : '');
-//       }
-
-//       if (post._id) {
-//           await _master2.default.updateDb(_projectArtiest2.default, { _id: post._id }, post);
-//           rowData = await _master2.default.getOneDb(_projectArtiest2.default, { _id: post._id });
-//       } else {
-//           rowData = await _master2.default.addDb(_projectArtiest2.default, post);
-//       }
-
-//       return res.send({ "code": _commonMsg2.default.sucessCODE, "msg": _commonMsg2.default.sucessMSG, "data": rowData });
-//   } catch (error) {
-//       return res.send({ "code": _commonMsg2.default.errorCODE, "msg": _commonMsg2.default.catchMsg, "error": error });
-//   }
-// };
-
 // Get all questions
-
 exports.getQuestions = async (req, res) => {
   if (req.query) {
     try {
@@ -94,6 +67,15 @@ exports.getQuestions = async (req, res) => {
 exports.getAllQuestions = async (req, res) => {
   try {
     const questions = await Question.find();
+    res.status(200).json(questions);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getPostInfo = async (req, res) => {
+  try {
+    const questions = await Question.findById({_id:req.body.postId});
     res.status(200).json(questions);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -133,6 +115,9 @@ exports.deleteQuestion = async (req, res) => {
 exports.likePost = async (req, res) => {
   const { postId } = req.query;
   const userId = req.body.createdBy;
+  const postInfo = req.body.postInfo;
+  const senderInfo = req.body.senderInfo;
+  const type = req.body.type;
   try {
     const post = await Question.findById(postId);
 
@@ -164,6 +149,7 @@ exports.likePost = async (req, res) => {
         postId: post._id
       });
       await notification.save();
+      utility.default.sendNotificationMail(postInfo,senderInfo,type)
       console.log("Post is like");
 
       return res.status(200).json({ message: "Post liked", post });
@@ -177,6 +163,9 @@ exports.likePost = async (req, res) => {
 exports.commentPost = async (req, res) => {
   const { postId } = req.query;
   const { userId, content } = req.body;
+  const postInfo = req.body.postInfo;
+  const senderInfo = req.body.senderInfo;
+  const type = req.body.type;
 
   try {
     const post = await Question.findById(postId);
@@ -197,6 +186,7 @@ exports.commentPost = async (req, res) => {
       postId: post._id
     });
     await notification.save();
+    // utility.default.sendNotificationMail(postInfo,senderInfo,type)
 
     console.log("Comment added and notification created");
 

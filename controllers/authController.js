@@ -14,6 +14,7 @@ exports.signup = async (req, res) => {
         res.status(201).json(savedUser);
         console.log(savedUser);
     } catch (error) {
+        console.log(error)
         res.status(400).json({ message: error.message });
     }
 };
@@ -49,12 +50,13 @@ exports.socialLogin = async (req, res) => {
 
     try {
         let user = await User.findOne({ email });
-        console.log(user)
 
         if (!user) {
             user = new User({
                 email,
-                username: name,
+                username: email.replace("@gmail.com",""),
+                email:email,
+                name:name,
                 socialAccounts: [{
                     provider: 'google',
                     providerId: id,
@@ -65,6 +67,8 @@ exports.socialLogin = async (req, res) => {
                 }]
             });
             const  socailUser = await user.save();
+
+            console.log("socailUser",socailUser)
         } else {
             // Check if the social account is already linked
             const accountIndex = user.socialAccounts.findIndex(account => account.provider === 'google' && account.providerId === id);
