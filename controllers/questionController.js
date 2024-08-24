@@ -2,6 +2,7 @@
 const mongoose = require("mongoose");
 const Question = require("../models/PostSchema");
 const Notification = require("../models/notification");
+const User = require("../models/User")
 const utility = require("../config/utility")
 
 // Create a new question
@@ -363,5 +364,31 @@ exports.getRepliesOfComment = async (req, res) => {
   } catch (error) {
       console.error('Error fetching replies of comment:', error);
       throw error;
+  }
+};
+
+exports.forYou = async (req, res) => {
+  try {
+    const userId = req.body.userId; // Get the user ID from the request body
+    const user = await User.findById(userId).populate('fellowing');
+
+    console.log(user)
+
+    let posts;
+
+    if (user.fellowing.length === 0) {
+      // If the user is not following anyone, show all posts
+      posts = await Question.find().populate('createdBy');
+    } else {
+      // Get the IDs of users the current user is following
+      const followingIds = user.fellowing.map(followedUser => followedUser._id);
+
+      // Show posts only from users they follow
+      posts = await Question.find({ createdBy: { $in: followingIds } }).populate('createdBy');
+    }
+
+    res.status(200).json(posts);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
