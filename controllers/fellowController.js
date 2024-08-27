@@ -36,7 +36,7 @@ exports.followUser = async (req, res) => {
       // Unfollow logic
       loggedInUser.fellowing = loggedInUser.fellowing.filter(id => id.toString() !== userId);
       userToFollow.followers = userToFollow.followers.filter(id => id.toString() !== currentUser);
-      
+
       await loggedInUser.save();
       await userToFollow.save();
 
@@ -56,6 +56,55 @@ exports.followUser = async (req, res) => {
     res.status(500).send({ message: 'Failed to follow/unfollow user' });
   }
 };
+
+// Backend: User Search API
+// exports.searchUsers = async (req, res) => {
+//   const { searchQuery } = req.body;
+
+//   try {
+//     const users = await User.find({
+//       $or: [
+//         { name: { $regex: `^${searchQuery}`, $options: 'i' } },
+//         { username: { $regex: `^${searchQuery}`, $options: 'i' } }
+//       ]
+//     });
+
+//     if (users.length > 0) {
+//       res.send({ data: users, message: '' });
+//     } else {
+//       res.status(404).send({ message: 'No users found' });
+//     }
+//   } catch (error) {
+//     console.error('Error searching for users:', error);
+//     res.status(500).send({ message: 'Failed to search users' });
+//   }
+// };
+
+exports.searchUsers = async (req, res) => {
+  const { searchQuery } = req.body;
+  const userId = req.body.userId; // Assuming you have the logged-in user's ID available
+
+  try {
+    const users = await User.find({
+      $or: [
+        { name: { $regex: `^${searchQuery}`, $options: 'i' } },
+        { username: { $regex: `^${searchQuery}`, $options: 'i' } }
+      ],
+      blockedUsers: { $ne: userId } // Exclude users who have blocked the current user
+    });
+
+    if (users.length > 0) {
+      res.send({ data: users, message: '' });
+    } else {
+      res.status(404).send({ message: 'No users found' });
+    }
+  } catch (error) {
+    console.error('Error searching for users:', error);
+    res.status(500).send({ message: 'Failed to search users' });
+  }
+};
+
+
 
 
 // Controller function to unfollow another user

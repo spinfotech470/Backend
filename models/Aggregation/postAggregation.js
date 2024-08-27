@@ -119,7 +119,9 @@ exports.getAllPostsWithLikesAndComments = async (req, res) => {
                     likesUserDetails: { $first: '$likesUserDetails' },
                     comments: { $push: '$comments' },
                     commentsUserDetails: { $first: '$commentsUserDetails' },
-                    commentLikesUserDetails: { $first: '$commentLikesUserDetails' }
+                    commentLikesUserDetails: { $first: '$commentLikesUserDetails' },
+                    score: { $first: '$score' },
+                    shares: { $first: '$shares' },
                 }
             }
         ]);

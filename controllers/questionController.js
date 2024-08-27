@@ -66,6 +66,7 @@ exports.getQuestions = async (req, res) => {
 };
 
 exports.getAllQuestions = async (req, res) => {
+  const userId = req.body.userId;
   try {
     const questions = await Question.find();
     res.status(200).json(questions);
@@ -76,7 +77,7 @@ exports.getAllQuestions = async (req, res) => {
 
 exports.getPostInfo = async (req, res) => {
   try {
-    const questions = await Question.findById({_id:req.body.postId});
+    const questions = await Question.findById({ _id: req.body.postId });
     res.status(200).json(questions);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -145,12 +146,12 @@ exports.likePost = async (req, res) => {
       // Send notification to the post owner (commented out for now)
       const notification = new Notification({
         recipient: post.createdBy,
-        sender: userId, 
+        sender: userId,
         type: 'Like',
         postId: post._id
       });
       await notification.save();
-      utility.default.sendNotificationMail(postInfo,senderInfo,type)
+      utility.default.sendNotificationMail(postInfo, senderInfo, type)
       console.log("Post is like");
 
       return res.status(200).json({ message: "Post liked", post });
@@ -179,10 +180,10 @@ exports.commentPost = async (req, res) => {
     const newComment = { userId, content };
     post.comments.push(newComment);
     await post.save();
-     // Create a notification
-     const notification = new Notification({
+    // Create a notification
+    const notification = new Notification({
       recipient: post.createdBy,
-      sender: userId, 
+      sender: userId,
       type: 'Comment',
       postId: post._id
     });
@@ -225,7 +226,7 @@ exports.deleteComment = async (req, res) => {
 
 exports.updateComment = async (req, res) => {
   // const { } = req.query;
-  const { content , postId, commentId} = req.body;
+  const { content, postId, commentId } = req.body;
 
   try {
     const post = await Question.findById(postId);
@@ -252,12 +253,12 @@ exports.updateComment = async (req, res) => {
 
 exports.likeComment = async (req, res) => {
   // const { postId, commentId } = req.query;
-  const {postId, commentId,userId } = req.body;
-  console.log("PostId --------- ",postId)
+  const { postId, commentId, userId } = req.body;
+  console.log("PostId --------- ", postId)
 
   try {
     const post = await Question.findById(postId);
-    console.log("post --",post)
+    console.log("post --", post)
 
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
@@ -289,7 +290,7 @@ exports.likeComment = async (req, res) => {
       await post.save();
       const notification = new Notification({
         recipient: post.createdBy,
-        sender: userId, 
+        sender: userId,
         type: 'CommentLike',
         postId: post._id
       });
@@ -306,7 +307,7 @@ exports.likeComment = async (req, res) => {
 
 exports.replyToComment = async (req, res) => {
   // const { postId } = req.query;
-  const { userId, content ,commentId, postId } = req.body;
+  const { userId, content, commentId, postId } = req.body;
   try {
     const post = await Question.findById(postId);
 
@@ -315,7 +316,7 @@ exports.replyToComment = async (req, res) => {
     }
 
     const comment = post.comments.id(commentId);
-    console.log("comment ",comment)
+    console.log("comment ", comment)
     if (!comment) {
       return res.status(404).json({ message: "Comment not found" });
     }
@@ -327,7 +328,7 @@ exports.replyToComment = async (req, res) => {
     const notification = new Notification({
       recipient: post.createdBy,
       commentWritter: req.body.commentWritter,
-      sender: userId, 
+      sender: userId,
       type: 'Reply',
       postId: post._id
     });
@@ -342,28 +343,28 @@ exports.replyToComment = async (req, res) => {
 };
 
 exports.getRepliesOfComment = async (req, res) => {
-  const { commentId,postId} = req.body;
+  const { commentId, postId } = req.body;
   try {
-      const post = await Question.findById(postId)
-          .populate({
-              path: 'comments.replies.userId',
-              select: 'username'
-          });
+    const post = await Question.findById(postId)
+      .populate({
+        path: 'comments.replies.userId',
+        select: 'username'
+      });
 
-      if (!post) {
-          throw new Error('Post not found');
-      }
+    if (!post) {
+      throw new Error('Post not found');
+    }
 
-      const comment = post.comments.id(commentId);
+    const comment = post.comments.id(commentId);
 
-      if (!comment) {
-          throw new Error('Comment not found');
-      }
-      console.log("User Details of replies : ",comment.replies)
-      return comment.replies;
+    if (!comment) {
+      throw new Error('Comment not found');
+    }
+    console.log("User Details of replies : ", comment.replies)
+    return comment.replies;
   } catch (error) {
-      console.error('Error fetching replies of comment:', error);
-      throw error;
+    console.error('Error fetching replies of comment:', error);
+    throw error;
   }
 };
 
@@ -390,5 +391,47 @@ exports.forYou = async (req, res) => {
     res.status(200).json(posts);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// exports.share = async (req, res) => {
+//   try {
+//     const { postId } = req.body;
+
+//     const post = await Question.findById(postId);
+//     if (!post) {
+//       return res.status(404).json({ error: 'Post not found' });
+//     }
+
+//     post.share += 1;
+
+//     const likesCount = post.likes?.length || 0;
+//     const commentsCount = post.comments?.length || 0;
+//     post.score = (likesCount * 1) + (commentsCount * 10) + (post.share * 20);
+
+//     await post.save();
+
+//     res.status(200).json(post);
+//   } catch (error) {
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// };
+
+exports.share = async (req, res) => {
+  const postId = req.body.postId;
+  const userId = req.body.userId;
+  try {
+    const post = await Question.findById(postId);
+    if (post) {
+      if (!post.shares.includes(userId)) {
+        post.shares.push(userId);
+        await post.save();
+        res.status(200).json(post);
+      }
+    } else {
+      res.status(500).json({ message: 'no post found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error', error: error });
   }
 };

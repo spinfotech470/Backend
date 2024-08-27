@@ -36,7 +36,38 @@ const postSchema = new mongoose.Schema({
     createdByUsername: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
     likes: [likeSchema],
-    comments: [commentSchema]
+    comments: [commentSchema],
+    shares: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],  // Store userIds who shared the post
+    score: { type: Number, default: 0 }
+});
+
+// Virtual to calculate score considering unique user comments
+postSchema.virtual('calculatedScore').get(function () {
+    const likesCount = this.likes?.length || 0;
+
+    // Count unique users who commented
+    const uniqueCommenters = new Set(this.comments.map(comment => comment.userId.toString())).size;
+
+    const shareCount = this.shares?.length || 0;
+
+    return (likesCount * 1) + (uniqueCommenters * 10) + (shareCount * 20);
+});
+
+// Set the virtual field to be included in JSON output
+postSchema.set('toJSON', { virtuals: true });
+postSchema.set('toObject', { virtuals: true });
+
+// Optional: Pre-save middleware to calculate and store the score
+postSchema.pre('save', function (next) {
+    const likesCount = this.likes.length;
+
+    // Count unique users who commented
+    const uniqueCommenters = new Set(this.comments.map(comment => comment.userId.toString())).size;
+
+    const shareCount = this.shares.length;
+
+    this.score = (likesCount * 1) + (uniqueCommenters * 10) + (shareCount * 20);
+    next();
 });
 
 // Create the Post model
