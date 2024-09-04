@@ -75,6 +75,48 @@ exports.getAllQuestions = async (req, res) => {
   }
 };
 
+exports.getPostsInfomations = async (req, res) => {
+  try {
+    const postId = req.body.postId;
+
+    // Fetch the post and populate createdBy and likes.userId with user details
+    const post = await Question.findById(postId)
+      .populate('createdBy', 'name username email gender blockedUsers profileImg') // Populate createdBy details
+      .populate('likes.userId', 'name username email gender blockedUsers profileImg') // Populate likes.userId details
+      .populate({
+        path: 'comments.userId', 
+        select: 'name username email gender blockedUsers profileImg' // Populate comments.userId details
+      })
+      .populate({
+        path: 'comments.likes.userId', 
+        select: 'name username email gender blockedUsers profileImg' // Populate comments.likes.userId details
+      })
+      .exec();
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    // Prepare response with user details
+    const response = {
+      ...post.toObject(),
+      createdByDetails: post.createdBy, // Add createdBy details
+      likesDetails: post.likes.map(like => like.userId), // Map likes to user details
+      commentsDetails: post.comments.map(comment => ({
+        ...comment.toObject(),
+        userId: comment.userId, // Include user details in each comment
+        likesDetails: comment.likes.map(like => like.userId) // Include user details for likes within each comment
+      }))
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
 exports.getPostInfo = async (req, res) => {
   try {
     const questions = await Question.findById({ _id: req.body.postId });
@@ -101,9 +143,23 @@ exports.updateQuestion = async (req, res) => {
 };
 
 // Delete a question by ID
+// exports.deleteQuestion = async (req, res) => {
+//   console.log("=-=-=-=-=-",req.query.id)
+//   try {
+//     const question = await Question.findByIdAndDelete(req.query.id);
+//     if (!question) {
+//       return res.status(404).json({ message: "Question not found" });
+//     }
+//     res.status(200).json({ message: "Question deleted successfully" });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 exports.deleteQuestion = async (req, res) => {
+  console.log("=-=-=-=-=-", req.params.id);  // Log the ID from the path parameters
   try {
-    const question = await Question.findByIdAndDelete(req.params.id);
+    const question = await Question.findByIdAndDelete(req.params.id); 
     if (!question) {
       return res.status(404).json({ message: "Question not found" });
     }
@@ -112,6 +168,7 @@ exports.deleteQuestion = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // Like a post
 exports.likePost = async (req, res) => {
@@ -433,5 +490,20 @@ exports.share = async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ message: 'Internal server error', error: error });
+  }
+};
+
+exports.deleteQuestionOrPost = async (req, res) => {
+  const id = req.body.postId;
+  try {
+    const question = await Question.findByIdAndUpdate({_id:id}, {
+      isDeleted:"true"
+    });
+    if (!question) {
+      return res.status(404).json({ message: "Question not found" });
+    }
+    res.status(200).json(question);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

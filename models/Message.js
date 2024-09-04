@@ -15,7 +15,9 @@ const messageSchema = new mongoose.Schema({
   isDeleted: { type: String, default: "false" },
   edited: { type: String, default: "false" },
   chatDeleted: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  replyTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Message' }, // Reference to the original message being replied to
+  replyTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Message' },
+  blocked: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+   // Reference to the original message being replied to
 });
 
 

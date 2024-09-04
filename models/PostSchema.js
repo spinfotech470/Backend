@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const likeSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     likedAt: { type: Date, default: Date.now }
-});
+}, { timestamps: true });
 
 // Define the Reply schema
 const replySchema = new mongoose.Schema({
@@ -12,7 +12,7 @@ const replySchema = new mongoose.Schema({
     content: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
     likes: [likeSchema]
-});
+}, { timestamps: true });
 
 // Define the Comment schema
 const commentSchema = new mongoose.Schema({
@@ -22,7 +22,7 @@ const commentSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
     replies: [replySchema],
     likes: [likeSchema]
-});
+}, { timestamps: true });
 
 // Define the Post schema
 const postSchema = new mongoose.Schema({
@@ -38,15 +38,16 @@ const postSchema = new mongoose.Schema({
     likes: [likeSchema],
     comments: [commentSchema],
     shares: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],  // Store userIds who shared the post
-    score: { type: Number, default: 0 }
-});
+    score: { type: Number, default: 0 },
+    isDeleted:{ type: String, default:"false" }
+}, { timestamps: true });
 
 // Virtual to calculate score considering unique user comments
 postSchema.virtual('calculatedScore').get(function () {
     const likesCount = this.likes?.length || 0;
 
     // Count unique users who commented
-    const uniqueCommenters = new Set(this.comments.map(comment => comment.userId.toString())).size;
+    const uniqueCommenters = new Set(this.comments && this.comments.map(comment => comment.userId.toString())).size;
 
     const shareCount = this.shares?.length || 0;
 
@@ -62,7 +63,7 @@ postSchema.pre('save', function (next) {
     const likesCount = this.likes.length;
 
     // Count unique users who commented
-    const uniqueCommenters = new Set(this.comments.map(comment => comment.userId.toString())).size;
+    const uniqueCommenters = new Set(this.comments && this.comments.map(comment => comment.userId.toString())).size;
 
     const shareCount = this.shares.length;
 

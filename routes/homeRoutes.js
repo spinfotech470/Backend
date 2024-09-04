@@ -1,5 +1,5 @@
 const express = require('express');
-const { createQuestion, getQuestions, getAllQuestions,updateQuestion,deleteQuestion,likePost,commentPost,likeComment,replyToComment,deleteComment,updateComment,getRepliesOfComment} = require('../controllers/questionController');
+const { createQuestion, getQuestions, getAllQuestions,updateQuestion,deleteQuestion,likePost,commentPost,likeComment,replyToComment,deleteComment,updateComment,getRepliesOfComment, getPostsInfomations} = require('../controllers/questionController');
 const { getAllPostsWithLikesAndComments } = require('../models/Aggregation/postAggregation');
 const { getUserNotifications } = require('../controllers/notificationController');
 const router = express.Router();
@@ -14,5 +14,6 @@ router.post('/likeComment', likeComment);
 router.post('/replyComment', replyToComment);
 router.get('/getCommentAllReply', getRepliesOfComment);
 router.post('/notification',getUserNotifications);
+router.post('/getPostsInfomations',getPostsInfomations);
 
 module.exports = router; 

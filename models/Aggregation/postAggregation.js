@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 const Post = require("../PostSchema");
+
 exports.getAllPostsWithLikesAndComments = async (req, res) => {
     try {
-        // console.log("inside the Lookup")
         const results = await Post.aggregate([
             {
                 $lookup: {
@@ -13,10 +13,7 @@ exports.getAllPostsWithLikesAndComments = async (req, res) => {
                 }
             },
             {
-                $unwind: {
-                    path: '$createdByDetails',
-                    preserveNullAndEmptyArrays: true // Keep posts without createdBy details
-                }
+                $unwind: '$createdByDetails'
             },
             {
                 $lookup: {
@@ -24,26 +21,6 @@ exports.getAllPostsWithLikesAndComments = async (req, res) => {
                     localField: 'likes.userId',
                     foreignField: '_id',
                     as: 'likesUserDetails'
-                }
-            },
-            {
-                $unwind: {
-                    path: '$likes',
-                    preserveNullAndEmptyArrays: true // Keep posts without likes
-                }
-            },
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'likes.userId',
-                    foreignField: '_id',
-                    as: 'likes.userDetails'
-                }
-            },
-            {
-                $unwind: {
-                    path: '$likes.userDetails',
-                    preserveNullAndEmptyArrays: true // Keep likes without user details
                 }
             },
             {
@@ -55,26 +32,6 @@ exports.getAllPostsWithLikesAndComments = async (req, res) => {
                 }
             },
             {
-                $unwind: {
-                    path: '$comments',
-                    preserveNullAndEmptyArrays: true // Keep posts without comments
-                }
-            },
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'comments.userId',
-                    foreignField: '_id',
-                    as: 'comments.userDetails'
-                }
-            },
-            {
-                $unwind: {
-                    path: '$comments.userDetails',
-                    preserveNullAndEmptyArrays: true // Keep comments without user details
-                }
-            },
-            {
                 $lookup: {
                     from: 'users',
                     localField: 'comments.likes.userId',
@@ -83,53 +40,92 @@ exports.getAllPostsWithLikesAndComments = async (req, res) => {
                 }
             },
             {
-                $unwind: {
-                    path: '$comments.likes',
-                    preserveNullAndEmptyArrays: true // Keep comments without likes
-                }
-            },
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'comments.likes.userId',
-                    foreignField: '_id',
-                    as: 'comments.likes.userDetails'
-                }
-            },
-            {
-                $unwind: {
-                    path: '$comments.likes.userDetails',
-                    preserveNullAndEmptyArrays: true // Keep likes without user details
-                }
-            },
-            {
-                $group: {
-                    _id: '$_id',
-                    askanonymously: { $first: '$askanonymously' },
-                    imgUrl: { $first: '$imgUrl' },
-                    questionTitle: { $first: '$questionTitle' },
-                    description: { $first: '$description' },
-                    category: { $first: '$category' },
-                    opinionFrom: { $first: '$opinionFrom' },
-                    createdBy: { $first: '$createdBy' },
-                    createdByUsername: { $first: '$createdByUsername' },
-                    createdAt: { $first: '$createdAt' },
-                    createdByDetails: { $first: '$createdByDetails' },
-                    likes: { $push: '$likes' },
-                    likesUserDetails: { $first: '$likesUserDetails' },
-                    comments: { $push: '$comments' },
-                    commentsUserDetails: { $first: '$commentsUserDetails' },
-                    commentLikesUserDetails: { $first: '$commentLikesUserDetails' },
-                    score: { $first: '$score' },
-                    shares: { $first: '$shares' },
+                $project: {
+                    askanonymously: 1,
+                    imgUrl: 1,
+                    questionTitle: 1,
+                    description: 1,
+                    category: 1,
+                    opinionFrom: 1,
+                    createdBy: 1,
+                    createdByUsername: 1,
+                    createdAt: 1,
+                    createdByDetails: 1,
+                    isDeleted: 1,
+                    likes: {
+                        $map: {
+                            input: '$likes',
+                            as: 'like',
+                            in: {
+                                userId: '$$like.userId',
+                                userDetails: {
+                                    $cond: [
+                                        { $lte: [{ $indexOfArray: ['$likes.userId', '$$like.userId'] }, 2] },
+                                        {
+                                            $arrayElemAt: ['$likesUserDetails', {
+                                                $indexOfArray: ['$likes.userId', '$$like.userId']
+                                            }]
+                                        },
+                                        null
+                                    ]
+                                },
+                                likedAt: '$$like.likedAt',
+                            }
+                        }
+                    },
+                    comments: {
+                        $map: {
+                            input: '$comments',
+                            as: 'comment',
+                            in: {
+                                commentId: '$$comment.commentId',
+                                userId: '$$comment.userId',
+                                userDetails: {
+                                    $cond: [
+                                        { $lte: [{ $indexOfArray: ['$comments.userId', '$$comment.userId'] }, 2] },
+                                        {
+                                            $arrayElemAt: ['$commentsUserDetails', {
+                                                $indexOfArray: ['$comments.userId', '$$comment.userId']
+                                            }]
+                                        },
+                                        null
+                                    ]
+                                },
+                                content: '$$comment.content',
+                                createdAt: '$$comment.createdAt',
+                                likes: {
+                                    $map: {
+                                        input: '$$comment.likes',
+                                        as: 'like',
+                                        in: {
+                                            userId: '$$like.userId',
+                                            userDetails: {
+                                                $cond: [
+                                                    { $lte: [{ $indexOfArray: ['$comments.likes.userId', '$$like.userId'] }, 2] },
+                                                    {
+                                                        $arrayElemAt: ['$commentLikesUserDetails', {
+                                                            $indexOfArray: ['$comments.likes.userId', '$$like.userId']
+                                                        }]
+                                                    },
+                                                    null
+                                                ]
+                                            },
+                                            likedAt: '$$like.likedAt',
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    score: 1,
+                    shares: 1,
                 }
             }
         ]);
-        // console.log("results",results)
+
         res.status(200).json(results);
     } catch (error) {
         console.error(error);
+        res.status(500).json({ error: 'Something went wrong' });
     }
 };
-
-
