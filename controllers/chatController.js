@@ -39,6 +39,8 @@ const Massage = require('../models/Message')
 //   }
 // };
 
+
+// 6/9/24 working code
 exports.getChatData = async (req, res) => {
   const { sender, receiver, userId } = req.query;
 
@@ -58,6 +60,37 @@ exports.getChatData = async (req, res) => {
     res.status(500).send({ message: 'Failed to fetch chats' });
   }
 };
+
+// exports.getChatData = async (req, res) => {
+//   const { sender, receiver, userId, page = 1, pageSize = 20 } = req.query;
+//   console.log("get chat data api", req.query)
+
+//   try {
+//     const skip = (page - 1) * pageSize; // Calculate how many messages to skip
+
+//     // Fetch messages with pagination and sort by timestamp in descending order (latest first)
+//     const messages = await Massage.find({
+//       $or: [
+//         { sender, receiver },
+//         { sender: receiver, receiver: sender }
+//       ],
+//       chatDeleted: { $ne: userId },
+//       isDeleted: false
+//     })
+//     .sort({ timestamp: -1 }) // Sort messages by most recent first
+//     .skip(skip)               // Skip messages for pagination
+//     .limit(parseInt(pageSize)); // Limit the number of messages fetched
+
+//     // Send the paginated messages
+//     res.send({ data: messages });
+//   } catch (error) {
+//     console.error('Error fetching chats:', error);
+//     res.status(500).send({ message: 'Failed to fetch chats' });
+//   }
+// };
+
+
+
 
 exports.myChatData = async (req, res) => {
   const { sender, receiver } = req.body;

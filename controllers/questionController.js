@@ -81,15 +81,15 @@ exports.getPostsInfomations = async (req, res) => {
 
     // Fetch the post and populate createdBy and likes.userId with user details
     const post = await Question.findById(postId)
-      .populate('createdBy', 'name username email gender blockedUsers profileImg') // Populate createdBy details
-      .populate('likes.userId', 'name username email gender blockedUsers profileImg') // Populate likes.userId details
+      .populate('createdBy', 'name username email gender blockedUsers profileImg socialAccounts') // Populate createdBy details
+      .populate('likes.userId', 'name username email gender blockedUsers profileImg socialAccounts') // Populate likes.userId details
       .populate({
         path: 'comments.userId', 
-        select: 'name username email gender blockedUsers profileImg' // Populate comments.userId details
+        select: 'name username email gender blockedUsers profileImg socialAccounts' // Populate comments.userId details
       })
       .populate({
         path: 'comments.likes.userId', 
-        select: 'name username email gender blockedUsers profileImg' // Populate comments.likes.userId details
+        select: 'name username email gender blockedUsers profileImg socialAccounts' // Populate comments.likes.userId details
       })
       .exec();
 

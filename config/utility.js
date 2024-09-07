@@ -269,49 +269,101 @@ utility.getImage = function (filename, req, res) {
 //     });
 // };
 
-utility.sendNotificationMail = function async(postInfo, senderInfo, type, token, req, res){
-    try {
-      let transporter = nodemailer.createTransport({
-        service: "hotmail",
-        auth: {
-          user: "rahulacharya978@outlook.com",
-          pass: "Rahul@outlook.com"
-        }
-      });
+// utility.sendNotificationMail = function async(postInfo, senderInfo, type, token, req, res){
+//     console.log("postInfo",postInfo)
+//     console.log("senderInfo",senderInfo)
 
-      const mailOptions = {
-        from: 'rahulacharya978@outlook.com',
-        to: postInfo.createdByDetails.email,
-        subject: 'Notification Mail From YouthAdda',
-        html: `<p>Hello ${postInfo.createdByDetails.name},</p>
-               <p>Notification From YouthAdda ${type} on your Post by ${type === 'like' ? senderInfo.name : "SomeOne Check Now By Clicking below post"}</p>
-               <br/>
-               <a href="http://localhost:3000" target="_blank" style="display:block; text-decoration:none; color:inherit;">
-           <div style="box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); padding: 10px; border-radius: 5px;">
-             <p style="margin: 0; font-weight: bold;">${postInfo.questionTitle}</p>
-             <img src="https://youthadda.s3.ap-south-1.amazonaws.com/undefined/${postInfo.imgUrl}" alt="Post Image" style="width: 100%; max-width: 600px; margin-top: 10px; border-radius: 5px;"/>
-           </div>
-         </a>`
-      };
-      transporter.sendMail(mailOptions, function (error, info) {
+//     try {
+//       let transporter = nodemailer.createTransport({
+//         service: "hotmail",
+//         auth: {
+//           user: "rahulacharya978@outlook.com",
+//           pass: "Rahul@outlook.com"
+//         }
+//       });
+
+//       const mailOptions = {
+//         from: 'rahulacharya978@outlook.com',
+//         to: postInfo.createdByDetails.email,
+//         subject: 'Notification Mail From YouthAdda',
+//         html: `<p>Hello ${postInfo.createdByDetails.name},</p>
+//                <p>Notification From YouthAdda ${type} on your Post by ${type === 'like' ? senderInfo.name : "SomeOne Check Now By Clicking below post"}</p>
+//                <br/>
+//                <a href="http://localhost:3000" target="_blank" style="display:block; text-decoration:none; color:inherit;">
+//            <div style="box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); padding: 10px; border-radius: 5px;">
+//              <p style="margin: 0; font-weight: bold;">${postInfo.questionTitle}</p>
+//              <img src="https://youthadda.s3.ap-south-1.amazonaws.com/undefined/${postInfo.imgUrl}" alt="Post Image" style="width: 100%; max-width: 600px; margin-top: 10px; border-radius: 5px;"/>
+//            </div>
+//          </a>`
+//       };
+//       transporter.sendMail(mailOptions, function (error, info) {
   
-        if (error) {
-        console.log(error)
-          res.send({ code: code.fail, msg: "Error", data: error });
-        } else {
-          res.send({ code: code.success, msg: "Done", data: info });
+//         if (error) {
+//         console.log(error)
+//           res.send({ code: code.fail, msg: "Error", data: error });
+//         } else {
+//           res.send({ code: code.success, msg: "Done", data: info });
+//         }
+//         if (info) {
+//           res.send({ code: code.success, msg: "done", data: info });
+//         }
+//         else {
+//           res.send({ code: code.fail, msg: "MAil has been send", data: error });
+//         }
+//       });
+//     } catch (error) {
+//         console.log(error)
+//       res.send({ code: code.success, msg: error });
+//     }
+//   }
+
+utility.sendNotificationMail = async function(postInfo, senderInfo, type, token, req, res) {
+    console.log("postInfo", postInfo);
+    console.log("senderInfo", senderInfo);
+
+    try {
+        // Check if the sender is the same as the post creator
+        if (senderInfo._id === postInfo.createdByDetails._id) {
+            console.log("No mail sent: sender and post creator are the same person.");
+            return; // Exit the function without sending an email
         }
-        if (info) {
-          res.send({ code: code.success, msg: "done", data: info });
-        }
-        else {
-          res.send({ code: code.fail, msg: "MAil has been send", data: error });
-        }
-      });
+
+        let transporter = nodemailer.createTransport({
+            service: "hotmail",
+            auth: {
+                user: "rahulacharya978@outlook.com",
+                pass: "Rahul@outlook.com"
+            }
+        });
+
+        const mailOptions = {
+            from: 'rahulacharya978@outlook.com',
+            to: postInfo.createdByDetails.email,
+            subject: 'Notification Mail From YouthAdda',
+            html: `<p>Hello ${postInfo.createdByDetails.name},</p>
+                   <p>Notification From YouthAdda ${type} on your Post by ${type === 'like' ? senderInfo.name : "SomeOne Check Now By Clicking below post"}</p>
+                   <br/>
+                   <a href="http://localhost:3000/questionDetails/${postInfo._id}" target="_blank" style="display:block; text-decoration:none; color:inherit;">
+               <div style="box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); padding: 10px; border-radius: 5px;">
+                 <p style="margin: 0; font-weight: bold;">${postInfo.questionTitle}</p>
+                 <img src="https://youthadda.s3.ap-south-1.amazonaws.com/undefined/${postInfo.imgUrl}" alt="Post Image" style="width: 100%; max-width: 600px; margin-top: 10px; border-radius: 5px;"/>
+               </div>
+             </a>`
+        };
+
+        transporter.sendMail(mailOptions, function(error, info) {
+            if (error) {
+                console.log(error);
+                res.send({ code: code.fail, msg: "Error", data: error });
+            } else {
+                res.send({ code: code.success, msg: "Done", data: info });
+            }
+        });
     } catch (error) {
-        console.log(error)
-      res.send({ code: code.success, msg: error });
+        console.log(error);
+        res.send({ code: code.success, msg: error });
     }
-  }
+};
+
 
 exports.default = utility;
