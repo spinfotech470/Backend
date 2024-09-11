@@ -1,7 +1,8 @@
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
-const Massage = require('../models/Message')
+const Massage = require('../models/Message');
+const User = require('../models/User');
 
 
 // exports.getChatData = async (req, res) => {
@@ -40,7 +41,27 @@ const Massage = require('../models/Message')
 // };
 
 
-// 6/9/24 working code
+// 6/9/24 working code and 11/9/24 working code
+// exports.getChatData = async (req, res) => {
+//   const { sender, receiver, userId } = req.query;
+
+//   try {
+//     const messages = await Massage.find({
+//       $or: [
+//         { sender, receiver },
+//         { sender: receiver, receiver: sender }
+//       ],
+//       chatDeleted: { $ne: userId },
+//       isDeleted: false
+//     });
+
+//     res.send({ data: messages });
+//   } catch (error) {
+//     console.error('Error fetching chats:', error);
+//     res.status(500).send({ message: 'Failed to fetch chats' });
+//   }
+// };
+
 exports.getChatData = async (req, res) => {
   const { sender, receiver, userId } = req.query;
 
@@ -52,7 +73,7 @@ exports.getChatData = async (req, res) => {
       ],
       chatDeleted: { $ne: userId },
       isDeleted: false
-    });
+    }).populate('replyTo'); // Populate the replyTo field
 
     res.send({ data: messages });
   } catch (error) {
@@ -60,6 +81,9 @@ exports.getChatData = async (req, res) => {
     res.status(500).send({ message: 'Failed to fetch chats' });
   }
 };
+
+
+
 
 // exports.getChatData = async (req, res) => {
 //   const { sender, receiver, userId, page = 1, pageSize = 20 } = req.query;
@@ -91,23 +115,122 @@ exports.getChatData = async (req, res) => {
 
 
 
+// get chatData working code 09/09/24
+
+// exports.myChatData = async (req, res) => {
+//   const { sender, receiver } = req.body;
+//   try {
+//     const messages = await Massage.find({
+//       $or: [
+//         { sender, sender },
+//         { receiver: sender },
+//       ],
+//       isDeleted: 'false'
+//     })
+//       .sort({ timestamp: -1 })
+//     res.json(messages);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// };
 
 exports.myChatData = async (req, res) => {
   const { sender, receiver } = req.body;
+  
   try {
-    const messages = await Massage.find({
-      $or: [
-        { sender, sender },
-        { receiver: sender },
-      ],
-      isDeleted: 'false'
-    })
-      .sort({ timestamp: -1 })
+    const messages = await Massage.aggregate([
+      {
+        $match: {
+          $or: [
+            { sender: sender },
+            { receiver: sender }
+          ],
+          isDeleted: 'false'
+        }
+      },
+      {
+        $lookup: {
+          from: 'users', // The 'User' collection
+          localField: 'sender', // Field in Message model
+          foreignField: 'username', // Field in User model
+          as: 'senderDetails' // Output array field for sender info
+        }
+      },
+      {
+        $lookup: {
+          from: 'users', // The 'User' collection
+          localField: 'receiver', // Field in Message model
+          foreignField: 'username', // Field in User model
+          as: 'receiverDetails' // Output array field for receiver info
+        }
+      },
+      {
+        $sort: { timestamp: -1 } // Sort by timestamp in descending order
+      },
+      {
+        $project: {
+          message: 1,
+          timestamp: 1,
+          sender:1,
+          receiver:1,
+          senderDetails:  {
+            $arrayElemAt: [
+              {
+                $map: {
+                  input: "$senderDetails",
+                  as: "sender",
+                  in: {
+                    name: "$$sender.name",
+                    username: "$$sender.username",
+                    blockedUsers: "$$sender.blockedUsers",
+                    socialAccounts: "$$sender.socialAccounts",
+                    city: "$$sender.city",
+                    gender: "$$sender.gender",
+                    profileImg: "$$sender.profileImg"
+                  }
+                }
+              },
+              0
+            ]
+          }, // Flatten sender details
+          receiverDetails:  {
+            $arrayElemAt: [
+              {
+                $map: {
+                  input: "$receiverDetails",
+                  as: "receiver",
+                  in: {
+                    name: "$$receiver.name",
+                    username: "$$receiver.username",
+                    blockedUsers: "$$receiver.blockedUsers",
+                    socialAccounts: "$$receiver.socialAccounts",
+                    city: "$$receiver.city",
+                    gender: "$$receiver.gender",
+                    profileImg: "$$receiver.profileImg"
+                  }
+                }
+              },
+              0
+            ]
+          }, // Flatten receiver details
+          isSecret: 1,
+          hideMe: 1,
+          type: 1,
+          seenStatus: 1,
+          chatDeleted:1,
+          edited:1,
+          isDeleted:1,
+          blocked:1
+        }
+      }
+    ]);
+
     res.json(messages);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // exports.chatsSeen = async (req, res) => {
 //   const { sender,receiver, ...updateData } = req.body;

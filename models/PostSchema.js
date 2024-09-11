@@ -39,7 +39,9 @@ const postSchema = new mongoose.Schema({
     comments: [commentSchema],
     shares: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],  // Store userIds who shared the post
     score: { type: Number, default: 0 },
-    isDeleted:{ type: String, default:"false" }
+    isDeleted:{ type: String, default:"false" },
+    isSecret: { type: String, default : "false"},
+    hideMe: { type: String, default: "false"},
 }, { timestamps: true });
 
 // Virtual to calculate score considering unique user comments

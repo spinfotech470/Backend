@@ -6,7 +6,7 @@ const messageSchema = new mongoose.Schema({
   message: { type: String, default: "" },
   image: { type: String },
   isSecret: { type: String, default : "false"},
-  hideMe: { type: String, default : ""},
+  hideMe: { type: String, default: ""},
   fileType: { type: String },
   type: { type: String, enum: ['text', 'image', 'emoji', 'gif', 'MayBeBoth'], default: 'text' },
   timestamp: { type: Date, default: Date.now },
