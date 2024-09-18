@@ -2,8 +2,15 @@
 var AWS = require('aws-sdk');
 const nodemailer = require('nodemailer');
 const csprng = require('csprng');
+const { Storage } = require('@google-cloud/storage');
+const path = require('path');
+const crypto = require('crypto');
 
-
+const storage = new Storage({
+    keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS, // Path to your service account key JSON file
+    projectId: 'youthadda@youthadda.iam.gserviceaccount.com', // Replace with your Google Cloud project ID
+  });
+  const bucketName = process.env.GCLOUD_STORAGE_BUCKET; // Your bucket name
 var utility = {};
 
 
@@ -46,130 +53,422 @@ var utility = {};
 //     }
 // };
 
+// utility.sendImageS3BucketNew = async function (data, imagePath, imageName, imageType) {
+//     console.log("Received image data new: ", data);
+//     if (!data) {
+//         throw new Error('No image data provided');
+//     }
+
+//     // Extract file metadata
+//     let ext = data.fileType || '' || imageType;
+//     let imageData = data.image || data; // Assuming image data is already a buffer
+
+//     // If the fileType is not provided, extract from name or default
+//     let fileName = data.name || 'unknown' || imageName;
+//     if (!ext && fileName) {
+//         let fileNameArr = fileName.split('.');
+//         if (fileNameArr.length) {
+//             ext = fileNameArr[fileNameArr.length - 1];
+//         }
+//     }
+
+//     if (!ext) {
+//         throw new Error('Could not determine the file extension');
+//     }
+
+//     let imgRand = Date.now() + csprng(24, 24) + '.' + ext;
+//     let savepath = imagePath + '/' + imgRand;
+
+//     // Save image to S3
+//     await utility.saveImageS3BucketNew({
+//         imageData: imageData,
+//         imageName: savepath
+//     }, ext);
+
+//     return savepath;
+// };
+
+
+// Function to send image to Google Cloud Storage bucket
+
 utility.sendImageS3BucketNew = async function (data, imagePath, imageName, imageType) {
-    console.log("Received image data new: ", data);
+    // console.log("Received image data new: ", data);
+    
     if (!data) {
-        throw new Error('No image data provided');
+      throw new Error('No image data provided');
     }
-
-    // Extract file metadata
-    let ext = data.fileType || '' || imageType;
+  
+    let ext = data.fileType || imageType;
     let imageData = data.image || data; // Assuming image data is already a buffer
-
-    // If the fileType is not provided, extract from name or default
-    let fileName = data.name || 'unknown' || imageName;
+    let fileName = data.name || imageName || 'unknown';
+  
+    // Extract file extension if not provided
     if (!ext && fileName) {
-        let fileNameArr = fileName.split('.');
-        if (fileNameArr.length) {
-            ext = fileNameArr[fileNameArr.length - 1];
-        }
+      let fileNameArr = fileName.split('.');
+      if (fileNameArr.length) {
+        ext = fileNameArr[fileNameArr.length - 1];
+      }
     }
-
+  
     if (!ext) {
-        throw new Error('Could not determine the file extension');
+      throw new Error('Could not determine the file extension');
     }
-
-    let imgRand = Date.now() + csprng(24, 24) + '.' + ext;
-    let savepath = imagePath + '/' + imgRand;
-
-    // Save image to S3
-    await utility.saveImageS3BucketNew({
-        imageData: imageData,
-        imageName: savepath
+  
+    // Generate a unique filename
+    const imgRand = Date.now() + crypto.randomBytes(12).toString('hex') + '.' + ext;
+    const savePath = path.join(imagePath, imgRand); // Using `path` to handle file paths
+  
+    // Save the image to Google Cloud Storage
+    await utility.saveImageGCSBucketNew({
+      imageData,
+      imageName: savePath
     }, ext);
+  
+    return savePath;
+  };
 
-    return savepath;
-};
+
+
+
+
+// utility.sendImageS3Bucket = async function (data, imagePath) {
+//     console.log("Received image data: ", data);
+//     var deletePath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
+//     if (data) {
+
+//     // Extract file metadata if data is a file object or buffer
+//     let ext = '';
+//     let imageData = data;
+//     if(imageData){
+//         let fileName = imageData.name || 'unknown';
+//         let fileNameArr = fileName.split('.');
+//         if(fileNameArr.length){
+//             ext = fileNameArr[fileNameArr.length - 1];
+//         }
+
+//     }
+//     if (imagePath == "dairy") {
+//         ext = "png";
+//     }
+
+//     let imgRand = Date.now() + (0, csprng)(24, 24) + '.' + ext;
+//     let savepath = imagePath + '/' + imgRand;
+
+//     // Assuming saveImageS3Bucket handles the actual saving to S3
+//     await utility.saveImageS3Bucket({
+//         imageData: data, // or data.buffer if it's a buffer
+//         imageName: savepath
+//     }, ext);
+
+//     if (deletePath) {
+//         await utility.deleteImageS3Bucket(deletePath);
+//     }
+
+//     return savepath;
+// }
+// };
+
+// utility.saveImageS3BucketNew = function (data, ext) {
+//     try {
+//         console.log("Data in main: ", data);
+//         console.log("Extension in main: ", ext);
+
+//         if (data && data.imageData) {
+//             var s3 = new AWS.S3({
+//                 accessKeyId: "AKIAU6GDZOCO3CGBLVU4",
+//                 secretAccessKey: "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",
+//                 region: "ap-south-1"
+//             });
+
+//             // Determine the correct ContentType
+//             let contentType = 'image/png'; // default to PNG
+//             if (ext === 'jpg' || ext === 'jpeg') {
+//                 contentType = 'image/jpeg';
+//             } else if (ext === 'gif') {
+//                 contentType = 'image/gif';
+//             } else if (ext === 'pdf') {
+//                 contentType = 'application/pdf';
+//             }
+
+//             var params = {
+//                 Bucket: "youthadda",
+//                 Key: process.env.plateform + '/' + data.imageName,
+//                 Body: data.imageData, // Buffer containing the image data
+//                 ACL: 'public-read',
+//                 ContentType: contentType
+//             };
+
+//             s3.putObject(params, function (err, data) {
+//                 if (err) {
+//                     console.log(err);
+//                     return { success: false, code: err };
+//                 } else {
+//                     console.log(data);
+//                     return { success: true, code: data };
+//                 }
+//             });
+//         } else {
+//             return { success: false, code: "Missing image data" };
+//         }
+//     } catch (error) {
+//         console.error(error);
+//         return { success: false, code: 500, msg: "Error", err: error };
+//     }
+// };
 
 utility.sendImageS3Bucket = async function (data, imagePath) {
-    console.log("Received image data: ", data);
-    var deletePath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
+    // console.log("Received image data: ", data);
+    const deletePath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
+    
     if (data) {
-
-    // Extract file metadata if data is a file object or buffer
-    let ext = '';
-    let imageData = data;
-    if(imageData){
-        let fileName = imageData.name || 'unknown';
-        let fileNameArr = fileName.split('.');
-        if(fileNameArr.length){
-            ext = fileNameArr[fileNameArr.length - 1];
+        // Extract file metadata if data is a file object or buffer
+        let ext = '';
+        let imageData = data;
+        
+        if (imageData) {
+            let fileName = imageData.name || 'unknown';
+            let fileNameArr = fileName.split('.');
+            if (fileNameArr.length) {
+                ext = fileNameArr[fileNameArr.length - 1];
+            }
         }
 
+        // Default extension handling for specific imagePath
+        if (imagePath === "dairy") {
+            ext = "png";
+        }
+
+        // Generate a unique filename
+        const imgRand = Date.now() + crypto.randomBytes(12).toString('hex') + '.' + ext;
+        const savePath = path.join(imagePath, imgRand); // Using `path` to handle file paths
+
+        // Save image to Google Cloud Storage
+        await utility.saveImageGCSBucket({
+            imageData: data, // Image data buffer
+            imageName: savePath
+        }, ext);
+
+        // Optionally delete the old image
+        if (deletePath) {
+            await utility.deleteImageGCSBucket(deletePath);
+        }
+
+        return savePath;
     }
-    if (imagePath == "dairy") {
-        ext = "png";
-    }
-
-    let imgRand = Date.now() + (0, csprng)(24, 24) + '.' + ext;
-    let savepath = imagePath + '/' + imgRand;
-
-    // Assuming saveImageS3Bucket handles the actual saving to S3
-    await utility.saveImageS3Bucket({
-        imageData: data, // or data.buffer if it's a buffer
-        imageName: savepath
-    }, ext);
-
-    if (deletePath) {
-        await utility.deleteImageS3Bucket(deletePath);
-    }
-
-    return savepath;
-}
 };
 
-utility.saveImageS3BucketNew = function (data, ext) {
+utility.saveImageGCSBucket = async function (data, ext) {
     try {
-        console.log("Data in main: ", data);
-        console.log("Extension in main: ", ext);
 
-        if (data && data.imageData) {
-            var s3 = new AWS.S3({
-                accessKeyId: "AKIAU6GDZOCO3CGBLVU4",
-                secretAccessKey: "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",
-                region: "ap-south-1"
-            });
-
-            // Determine the correct ContentType
-            let contentType = 'image/png'; // default to PNG
-            if (ext === 'jpg' || ext === 'jpeg') {
-                contentType = 'image/jpeg';
-            } else if (ext === 'gif') {
-                contentType = 'image/gif';
-            } else if (ext === 'pdf') {
-                contentType = 'application/pdf';
-            }
-
-            var params = {
-                Bucket: "youthadda",
-                Key: process.env.plateform + '/' + data.imageName,
-                Body: data.imageData, // Buffer containing the image data
-                ACL: 'public-read',
-                ContentType: contentType
-            };
-
-            s3.putObject(params, function (err, data) {
-                if (err) {
-                    console.log(err);
-                    return { success: false, code: err };
-                } else {
-                    console.log(data);
-                    return { success: true, code: data };
-                }
-            });
-        } else {
+        if (!data || !data.imageData) {
             return { success: false, code: "Missing image data" };
         }
+
+        // Extract the actual image data buffer
+        const imageBuffer = data.imageData.data;
+
+        // Determine ContentType based on file extension
+        let contentType = 'image/png'; // Default to PNG
+        if (ext === 'jpg' || ext === 'jpeg') {
+            contentType = 'image/jpeg';
+        } else if (ext === 'gif') {
+            contentType = 'image/gif';
+        } else if (ext === 'pdf') {
+            contentType = 'application/pdf';
+        }
+
+        // Upload to Google Cloud Storage
+        const bucket = storage.bucket(bucketName);
+        const file = bucket.file(data.imageName); // The full path to the image in the bucket
+
+        const stream = file.createWriteStream({
+            metadata: {
+                contentType: contentType,
+            },
+            resumable: false, // Disable resumable uploads (can enable if needed)
+            // No need to set public: true
+        });
+
+        stream.on('error', (err) => {
+            // console.error('Error uploading to Google Cloud Storage:', err);
+            throw err;
+        });
+
+        stream.on('finish', () => {
+        });
+
+        // Write image data (Buffer) to Google Cloud Storage
+        stream.end(imageBuffer);  // Pass the actual image buffer here
+
+        return { success: true, code: 'Upload successful' };
     } catch (error) {
-        console.error(error);
+        // console.error('Error saving image:', error);
         return { success: false, code: 500, msg: "Error", err: error };
     }
 };
 
+
+// utility.saveImageGCSBucket = async function (data, ext) {
+//     try {
+
+//         if (!data || !data.imageData) {
+//             return { success: false, code: "Missing image data" };
+//         }
+
+//         // Determine ContentType based on file extension
+//         let contentType = 'image/png'; // Default to PNG
+//         if (ext === 'jpg' || ext === 'jpeg') {
+//             contentType = 'image/jpeg';
+//         } else if (ext === 'gif') {
+//             contentType = 'image/gif';
+//         } else if (ext === 'pdf') {
+//             contentType = 'application/pdf';
+//         }
+
+//         // Upload to Google Cloud Storage
+//         const bucket = storage.bucket(bucketName);
+//         const file = bucket.file(data.imageName); // The full path to the image in the bucket
+
+//         const stream = file.createWriteStream({
+//             metadata: {
+//                 contentType: contentType,
+//             },
+//             resumable: false, // Disable resumable uploads (can enable if needed)
+//             public: true, // Set the file to be publicly accessible
+//         });
+
+//         stream.on('error', (err) => {
+//             console.error('Error uploading to Google Cloud Storage:', err);
+//             throw err;
+//         });
+
+//         stream.on('finish', () => {
+//             console.log('Upload complete!');
+//         });
+
+//         // Write image data (Buffer) to Google Cloud Storage
+//         stream.end(data.imageData);
+
+//         return { success: true, code: 'Upload successful' };
+//     } catch (error) {
+//         console.error('Error saving image:', error);
+//         return { success: false, code: 500, msg: "Error", err: error };
+//     }
+// };
+
+// utility.saveImageGCSBucket = async function (data, ext) {
+//     try {
+//         console.log("Data in main: ", data);
+//         console.log("Extension in main: ", ext);
+
+//         if (!data || !data.imageData) {
+//             return { success: false, code: "Missing image data" };
+//         }
+
+//         // Extract the actual image data buffer
+//         const imageBuffer = data.imageData.data;
+
+//         // Determine ContentType based on file extension
+//         let contentType = 'image/png'; // Default to PNG
+//         if (ext === 'jpg' || ext === 'jpeg') {
+//             contentType = 'image/jpeg';
+//         } else if (ext === 'gif') {
+//             contentType = 'image/gif';
+//         } else if (ext === 'pdf') {
+//             contentType = 'application/pdf';
+//         }
+
+//         // Upload to Google Cloud Storage
+//         const bucket = storage.bucket(bucketName);
+//         const file = bucket.file(data.imageName); // The full path to the image in the bucket
+
+//         const stream = file.createWriteStream({
+//             metadata: {
+//                 contentType: contentType,
+//             },
+//             resumable: false, // Disable resumable uploads (can enable if needed)
+//             public: true, // Set the file to be publicly accessible
+//         });
+
+//         stream.on('error', (err) => {
+//             console.error('Error uploading to Google Cloud Storage:', err);
+//             throw err;
+//         });
+
+//         stream.on('finish', () => {
+//             console.log('Upload complete!');
+//         });
+
+//         // Write image data (Buffer) to Google Cloud Storage
+//         stream.end(imageBuffer);  // Pass the actual image buffer here
+
+//         return { success: true, code: 'Upload successful' };
+//     } catch (error) {
+//         console.error('Error saving image:', error);
+//         return { success: false, code: 500, msg: "Error", err: error };
+//     }
+// };
+
+utility.deleteImageGCSBucket = async function (imageName) {
+    try {
+        const bucket = storage.bucket(bucketName);
+        await bucket.file(imageName).delete();
+        return { success: true, code: 'Deletion successful' };
+    } catch (error) {
+        console.error('Error deleting image:', error);
+        return { success: false, code: 500, msg: "Error", err: error };
+    }
+};
+
+utility.saveImageGCSBucketNew = async function (data, ext) {
+    try {
+  
+      if (!data || !data.imageData) {
+        return { success: false, code: "Missing image data" };
+      }
+  
+      // Determine ContentType based on file extension
+      let contentType = 'image/png'; // default to PNG
+      if (ext === 'jpg' || ext === 'jpeg') {
+        contentType = 'image/jpeg';
+      } else if (ext === 'gif') {
+        contentType = 'image/gif';
+      } else if (ext === 'pdf') {
+        contentType = 'application/pdf';
+      }
+  
+      // Upload to Google Cloud Storage
+      const bucket = storage.bucket(bucketName);
+      const file = bucket.file(data.imageName); // The full path to the image in the bucket
+  
+      const stream = file.createWriteStream({
+        metadata: {
+          contentType: contentType,
+        },
+        resumable: false, // Disable resumable uploads (can enable if needed)
+        public: true, // Set the file to be publicly accessible (equivalent to ACL 'public-read')
+      });
+  
+      stream.on('error', (err) => {
+        console.error('Error uploading to Google Cloud Storage:', err);
+        throw err;
+      });
+  
+      stream.on('finish', () => {
+      });
+  
+      // Write image data (Buffer) to Google Cloud Storage
+      stream.end(data.imageData);
+  
+      return { success: true, code: 'Upload successful' };
+    } catch (error) {
+      console.error('Error saving image:', error);
+      return { success: false, code: 500, msg: "Error", err: error };
+    }
+  };
+
 utility.saveImageS3Bucket = function (data, ext) {
     try {
-        console.log("data in main=-=-=-=-", data)
-        console.log("ext in main=-=-=-=-", ext)
 
         if (data) {
 
@@ -192,10 +491,8 @@ utility.saveImageS3Bucket = function (data, ext) {
 
             s3.putObject(params, function (err, data) {
                 if (err) {
-                    console.log(err);
                     return { success: false, code: err };
                 } else {
-                    console.log(data);
                     return { success: false, code: data };
                 }
             });
@@ -226,15 +523,11 @@ utility.deleteImageS3Bucket = async function (data) {
     };
     try {
         await s3.headObject(params).promise();
-        console.log("File Found in S3");
         try {
             await s3.deleteObject(params).promise();
-            console.log("file deleted Successfully");
         } catch (err) {
-            console.log("ERROR in file Deleting : " + JSON.stringify(err));
         }
     } catch (err) {
-        console.log("File not Found ERROR : " + err.code);
     }
 };
 
@@ -318,13 +611,10 @@ utility.getImage = function (filename, req, res) {
 //   }
 
 utility.sendNotificationMail = async function(postInfo, senderInfo, type, token, req, res) {
-    console.log("postInfo", postInfo);
-    console.log("senderInfo", senderInfo);
 
     try {
         // Check if the sender is the same as the post creator
         if (senderInfo._id === postInfo.createdByDetails._id) {
-            console.log("No mail sent: sender and post creator are the same person.");
             return; // Exit the function without sending an email
         }
 
@@ -353,14 +643,12 @@ utility.sendNotificationMail = async function(postInfo, senderInfo, type, token,
 
         transporter.sendMail(mailOptions, function(error, info) {
             if (error) {
-                console.log(error);
                 res.send({ code: code.fail, msg: "Error", data: error });
             } else {
                 res.send({ code: code.success, msg: "Done", data: info });
             }
         });
     } catch (error) {
-        console.log(error);
         res.send({ code: code.success, msg: error });
     }
 };

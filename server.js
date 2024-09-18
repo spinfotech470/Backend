@@ -79,16 +79,13 @@ io.use((socket, next) => {
 // Socket.IO connection
 // io.on('connection', (socket) => {
 //   // Join a room with the user's username 
-//   console.log(socket.user._id)
 //   socket.join(socket.user.username);``
 
 //   // Mark user as active
 //   User.findOneAndUpdate({ _id: socket.user._id }, { isActive: true }, { new: true })
 //   .then(user => {
 //     if (user) {
-//       console.log("User marked as active:", user.username);
 //     } else {
-//       console.error("User not found");
 //     }
 //   })
 //   .catch(err => console.error("Error updating user status:", err));
@@ -103,15 +100,12 @@ io.use((socket, next) => {
 //       type,
 //       timestamp: new Date()
 //     });
-//     console.log("newMessage",newMessage)
 //     await newMessage.save();
-//     console.log("Emitting to:", receiver, "Message:", newMessage);
 //     io.to(receiver).emit('message', newMessage);
 //   });
 
 //   // Handle disconnection
 //   socket.on('disconnect', () => {
-//     console.log("User disconnected", socket.id);
 //     // Mark user as inactive
 //     User.findOneAndUpdate(
 //       { _id: socket.user._id },
@@ -120,9 +114,7 @@ io.use((socket, next) => {
 //     )
 //     .then(user => {
 //       if (user) {
-//         console.log("User marked as inactive:", user.username);
 //       } else {
-//         console.error("User not found");
 //       }
 //     })
 //     .catch(err => console.error("Error updating user status:", err));
@@ -133,28 +125,22 @@ io.use((socket, next) => {
 io.on('connection', (socket) => {
   // Join a room with the user's username
   if (socket.user && socket.user._id && socket.user.username) {
-    console.log("User connected:", socket.user.username);
     socket.join(socket.user.username);
 
     // Mark user as active
     User.findOneAndUpdate({ _id: socket.user._id }, { isActive: true }, { new: true })
       .then(user => {
         if (user) {
-          console.log("User marked as active:", user.username);
         } else {
-          console.error("User not found during connection");
         }
       })
       .catch(err => console.error("Error updating user status during connection:", err));
   } else if (socket.user && socket.user._id && socket.user.username) {
-    console.log("User connected by city:", socket.user.username);
     socket.join(socket.user.username);
     User.findOneAndUpdate({ city: socket.user.city }, { isActive: true }, { new: true })
       .then(user => {
         if (user) {
-          console.log("User marked as active by city:", user.username);
         } else {
-          console.error("User not found during connection(city)");
         }
       })
   } else {
@@ -180,7 +166,6 @@ io.on('connection', (socket) => {
             timestamp: new Date()
           });
           await newMessage.save();
-          console.log("Message saved and emitting to(Img):", receiver);
           io.to(receiver).emit('message', newMessage);
         } else {
           if (reply === "no" && forWhat !== "broadCast") {
@@ -195,7 +180,6 @@ io.on('connection', (socket) => {
               timestamp: new Date()
             });
             await newMessage.save();
-            console.log("Message saved and emitting to:", receiver);
             io.to(receiver).emit('message', newMessage);
           } else if (forWhat === "broadCast" || type === "MayBeBoth") {
             //get both message and image
@@ -205,6 +189,7 @@ io.on('connection', (socket) => {
 
               // Find all users whose city matches the receiver
               const usersInCity = await User.find({ city: receiver });
+
               if (usersInCity.length > 0) {
                 usersInCity.forEach(async user => {
                   if (user.username !== socket.user.username) { // Exclude the sender
@@ -221,39 +206,84 @@ io.on('connection', (socket) => {
 
                     await newMessage.save();
                     io.to(user.username).emit('message', newMessage);
-                    console.log(`Broadcast message saved and sent to ${user.username} in city ${receiver}`);
                   }
                 });
               } else {
-                console.log(`No users found in city: ${receiver}`);
               }
             }
             //get only message
             if (type === "MayBeBoth" && !image) {
               // Find all users whose city matches the receiver
-              const usersInCity = await User.find({ city: receiver });
+              let usersInCity = await User.find({ city: receiver });
+
               if (usersInCity.length > 0) {
-                usersInCity.forEach(async user => {
+                // Shuffle the array of users
+                usersInCity = usersInCity.sort(() => 0.5 - Math.random());
+
+                // Select a random subset of 100 users
+                const selectedUsers = usersInCity.slice(0, 100);
+
+                for (const user of selectedUsers) {
                   if (user.username !== socket.user.username) { // Exclude the sender
-                    newMessage = new Message({
-                      sender: socket.user.username,
-                      receiver: user.username, // Send to each user in the city
-                      message,
-                      image: '',
-                      type,
-                      isSecret: data.isSecret,
-                      hideMe: data.hideMe,
-                      timestamp: new Date()
+
+                    // Check if both sender and receiver have sent at least one message to each other with isSecret: "false"
+                    const existingConversation = await Message.find({
+                      $or: [
+                        { sender: socket.user.username, receiver: user.username, isSecret: 'false' },
+                        { sender: user.username, receiver: socket.user.username, isSecret: 'false' }
+                      ]
                     });
 
-                    await newMessage.save();
-                    io.to(user.username).emit('message', newMessage);
-                    console.log(`Broadcast message saved and sent to ${user.username} in city ${receiver}`);
+                    // If both have sent at least one message to each other
+                    const senderToReceiver = existingConversation.some(msg => msg.sender === socket.user.username);
+                    const receiverToSender = existingConversation.some(msg => msg.sender === user.username);
+
+                    // Only send the message if no two-way non-secret conversation exists
+                    if (!senderToReceiver || !receiverToSender) {
+                      const newMessage = new Message({
+                        sender: socket.user.username,
+                        receiver: user.username, // Send to each user in the city
+                        message,
+                        type,
+                        isSecret,
+                        hideMe,
+                        timestamp: new Date()
+                      });
+
+                      // Save the new message
+                      await newMessage.save();
+
+                      // Emit the message to the user
+                      io.to(user.username).emit('message', newMessage);
+                    } else {
+                    }
                   }
-                });
+                }
               } else {
-                console.log(`No users found in city: ${receiver}`);
               }
+
+
+              // const usersInCity = await User.find({ city: receiver });
+              // if (usersInCity.length > 0) {
+              //   usersInCity.forEach(async user => {
+              //     if (user.username !== socket.user.username) { // Exclude the sender
+              //       newMessage = new Message({
+              //         sender: socket.user.username,
+              //         receiver: user.username, // Send to each user in the city
+              //         message,
+              //         image: '',
+              //         type,
+              //         isSecret: data.isSecret,
+              //         hideMe: data.hideMe,
+              //         timestamp: new Date()
+              //       });
+
+              //       await newMessage.save();
+              //       io.to(user.username).emit('message', newMessage);
+              //     }
+              //   });
+              // } else {
+              // }
             }
             // newMessage = new Message({
             //   sender: socket.user.username,
@@ -265,7 +295,6 @@ io.on('connection', (socket) => {
             //   timestamp: new Date()
             // });
             // await newMessage.save();
-            // console.log("Message saved and emitting to(broadcaste):", receiver);
             // io.to(receiver).emit('message', newMessage);
           }
           else {
@@ -281,21 +310,17 @@ io.on('connection', (socket) => {
               timestamp: new Date()
             });
             await newMessage.save();
-            console.log("Message saved and emitting to:", receiver);
             io.to(receiver).emit('message', newMessage);
           }
         }
       } catch (err) {
-        console.error("Error saving message:", err);
       }
     } else {
-      console.error("Invalid message data:", data);
     }
   });
 
   // Handle disconnection
   socket.on('disconnect', () => {
-    console.log("User disconnected", socket.id);
     if (socket.user && socket.user._id) {
       User.findOneAndUpdate(
         { _id: socket.user._id },
@@ -304,9 +329,7 @@ io.on('connection', (socket) => {
       )
         .then(user => {
           if (user) {
-            console.log("User marked as inactive:", user.username);
           } else {
-            console.error("User not found during disconnection");
           }
         })
         .catch(err => console.error("Error updating user status during disconnection:", err));

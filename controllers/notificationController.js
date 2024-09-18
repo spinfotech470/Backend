@@ -25,7 +25,7 @@ exports.getUserNotifications = async (req, res) => {
         .sort({ createdAt: -1 }); // Sort by most recent
         return res.status(200).json(notifications);
     } catch (error) {
-        console.error('Error fetching notifications:', error);
+        // console.error('Error fetching notifications:', error);
         return res.status(500).json({ message: 'An error occurred while fetching notifications.' });
     }
   };

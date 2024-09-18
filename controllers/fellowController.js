@@ -18,44 +18,44 @@ exports.userInfo = async (req, res) => {
   }
 };
 
-exports.followUser = async (req, res) => {
-  const { userId, currentUser } = req.body; // whom to follow/unfollow and logged user
+// exports.followUser = async (req, res) => {
+//   const { userId, currentUser } = req.body; // whom to follow/unfollow and logged user
 
-  try {
-    const userToFollow = await User.findById(userId);
-    const loggedInUser = await User.findById(currentUser);
+//   try {
+//     const userToFollow = await User.findById(userId);
+//     const loggedInUser = await User.findById(currentUser);
 
-    if (!userToFollow || !loggedInUser) {
-      return res.status(404).send({ message: 'User not found' });
-    }
+//     if (!userToFollow || !loggedInUser) {
+//       return res.status(404).send({ message: 'User not found' });
+//     }
 
-    // Check if the user is already following
-    const isFollowing = loggedInUser.fellowing.includes(userId);
+//     // Check if the user is already following
+//     const isFollowing = loggedInUser.fellowing.includes(userId);
 
-    if (isFollowing) {
-      // Unfollow logic
-      loggedInUser.fellowing = loggedInUser.fellowing.filter(id => id.toString() !== userId);
-      userToFollow.followers = userToFollow.followers.filter(id => id.toString() !== currentUser);
+//     if (isFollowing) {
+//       // Unfollow logic
+//       loggedInUser.fellowing = loggedInUser.fellowing.filter(id => id.toString() !== userId);
+//       userToFollow.followers = userToFollow.followers.filter(id => id.toString() !== currentUser);
 
-      await loggedInUser.save();
-      await userToFollow.save();
+//       await loggedInUser.save();
+//       await userToFollow.save();
 
-      return res.status(200).send({ message: 'User unfollowed successfully' });
-    } else {
-      // Follow logic
-      loggedInUser.fellowing.push(userId);
-      userToFollow.followers.push(currentUser);
+//       return res.status(200).send({ message: 'User unfollowed successfully' });
+//     } else {
+//       // Follow logic
+//       loggedInUser.fellowing.push(userId);
+//       userToFollow.followers.push(currentUser);
 
-      await loggedInUser.save();
-      await userToFollow.save();
+//       await loggedInUser.save();
+//       await userToFollow.save();
 
-      return res.status(200).send({ message: 'User followed successfully' });
-    }
-  } catch (error) {
-    console.error('Error following/unfollowing user:', error);
-    res.status(500).send({ message: 'Failed to follow/unfollow user' });
-  }
-};
+//       return res.status(200).send({ message: 'User followed successfully' });
+//     }
+//   } catch (error) {
+//     console.error('Error following/unfollowing user:', error);
+//     res.status(500).send({ message: 'Failed to follow/unfollow user' });
+//   }
+// };
 
 // Backend: User Search API
 // exports.searchUsers = async (req, res) => {
@@ -99,12 +99,53 @@ exports.searchUsers = async (req, res) => {
       res.status(404).send({ message: 'No users found' });
     }
   } catch (error) {
-    console.error('Error searching for users:', error);
+    // console.error('Error searching for users:', error);
     res.status(500).send({ message: 'Failed to search users' });
   }
 };
 
+exports.followUser = async (req, res) => {
+  const { userId, currentUser } = req.body; // whom to follow/unfollow and logged-in user
 
+  try {
+    const userToFollow = await User.findById(userId);
+    const loggedInUser = await User.findById(currentUser);
+
+    if (!userToFollow || !loggedInUser) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+
+    // Check if the user is already following
+    const isFollowing = loggedInUser.fellowing.includes(userId);
+
+    if (isFollowing) {
+      // Unfollow logic
+      await User.findByIdAndUpdate(currentUser, {
+        $pull: { fellowing: userId },
+      }, { new: true, useFindAndModify: false });
+
+      await User.findByIdAndUpdate(userId, {
+        $pull: { followers: currentUser },
+      }, { new: true, useFindAndModify: false });
+
+      return res.status(200).send({ message: 'User unfollowed successfully' });
+    } else {
+      // Follow logic
+      await User.findByIdAndUpdate(currentUser, {
+        $addToSet: { fellowing: userId },  // Prevent duplicates
+      }, { new: true, useFindAndModify: false });
+
+      await User.findByIdAndUpdate(userId, {
+        $addToSet: { followers: currentUser },  // Prevent duplicates
+      }, { new: true, useFindAndModify: false });
+
+      return res.status(200).send({ message: 'User followed successfully' });
+    }
+  } catch (error) {
+    // console.error('Error following/unfollowing user:', error);
+    res.status(500).send({ message: 'Failed to follow/unfollow user' });
+  }
+};
 
 
 // Controller function to unfollow another user

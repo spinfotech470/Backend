@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "youthadda",
+  "private_key_id": "c0879879663c29f8ccb6a3daeff4301ba85e5784",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC17GmhrlOi9Wfx\nMOB+Wda3A4Holf8fmuDTceIwIhshsOYce8LCPMIe5DTP7maKgSWKGeFqs8cxV9h7\nMPQRBmgKqjyE4XP+O6ObXX3XbEwA/bLOUPisWN5GGlsxGkYni/edIWwc+W4jOTYu\nJvRaYZttn8xETDSpgLgY1Lp2wae/UcL+uKDaFn+VkEtmXWkBy1VKVmMsN+lkFp4/\nBkC0Kj4NIgE0ABgnBGWEQKMra5ROT3YOegO1RH1NeMKvxm32tfNTmednh/Pm0MS4\nNEuB9XD+afq4FnhS3iK2TluJzeNx3oquEqDXqgZkJRNXULt2yewpo8APZ9U0tD1I\n518l6I8vAgMBAAECggEAHkbRMapMmxNSkC59Pin/dQftZ+MGyaDCCA6tASu77jh9\no4HpYOAxwmhibbSUdjqWH8y82kA/R3QCQEZeaDLzv8qjNc47urT8PpApsF+CqquO\nRY3uROipXWtnf92KjWxa8lisoInWjaAo5zdudVhHQNBWc4tnPEqC2QcWXUtPeqR9\nsDTOX4Mm4jReytP1CypR27mZ9AW/aLDxBi6Air0ZlAtX6YPH+aAbMqjkWXGQPH+f\nnb4KiuuNe2gsQ7Vgi9JhcrBc0rGbb26hjYsQE9KpcT+N68cepB///bBuqVcWhdD4\nNfPMFVXSxxWP8A2aK8oXbUrcaCRQm1NxRhUPWj326QKBgQDtluDjujk4xIYXniZX\n5vc3XukEySSbZb7bemzl+Ub+FsYPLg9EGxgmpwWEfcLqEgYMkxZ7qJQ+olOBYXJU\nYLxkTU9lHBmL0m+S2i5KR25peH8ZuVeuMfAKLPXlhghW9eWGPIFE8oeg6eY3HsB8\nyVaTOQb/rJwe6WeYrKvqhshQCwKBgQDEBUaUWPsZZDi44eYAG9pQDZEldG14g1J8\nihK08pHYK2HidxQ2GXy8+vF9ln6uvZG5WITIjJqkUrbavWEGzeKG8uiHPuk6Z19F\nQBhSOvTAOEZjlLObglgEu/B/vLT1NwC9HdiR1CS3pvk+hvfLWsFoTfNL+AguAWk3\ngQV2L+N/7QKBgDYXuOIAPxDupXzxE9fFjRl9MV5WkVAUDS0ZJXwCkig9dSB1oyIl\nbQ03z6jHnT3/loL8Zg0HZ6EPAiYd0pLlZ18Kvv3NNP/BjIeJxypAMyIuPfnUWeMe\nGYGnlOCJ8JIj7/rtAZ15/mkjd7eq97YxfNWOEUrauLzM9TosbgO6ZhbbAoGBAIAw\n3w5m/peFZl7qRIrvrB7MMI7pDCpS31/YwBEbzWssO9BphYs3sc644bL694/5I1Kt\n4/BvmzY5baGxVcGoZStRseW4q7fpIHHeT8l/Cs6mPsoi1i6t2DgIXGh9FW6D8PS8\njwQXU4fTJ47Pnz+a837t811MMLU9cPy+YL8A5GulAoGAKee/utW3iV6Tdam7E2yz\n5FjMEmu9vgI8gJFUOK5FtGkPnA/3C3SFx25ClMIKjCYjbp6lfey7fxlRgcZyGcU2\nLvKlZzhCY00r6u/NCzggt1c0FynxSfCCD8viTFC2DEqRphCQGjMz0A101REBXGy3\nY6BljIKrHfJkQxoZEpR7ZaQ=\n-----END PRIVATE KEY-----\n",
+  "client_email": "youthadda@youthadda.iam.gserviceaccount.com",
+  "client_id": "115800925823274268437",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/youthadda%40youthadda.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

@@ -12,9 +12,9 @@ exports.signup = async (req, res) => {
     try {
         const savedUser = await user.save();
         res.status(201).json(savedUser);
-        console.log(savedUser);
+        // console.log(savedUser);
     } catch (error) {
-        console.log(error)
+        // console.log(error)
         res.status(400).json({ message: error.message });
     }
 };
@@ -29,7 +29,7 @@ exports.login = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
-        console.log(user, "Login successfully");
+        // console.log(user, "Login successfully");
 
         const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET, { expiresIn: '24h' });
        
@@ -68,7 +68,7 @@ exports.socialLogin = async (req, res) => {
             });
             const  socailUser = await user.save();
 
-            console.log("socailUser",socailUser)
+            // console.log("socailUser",socailUser)
         } else {
             // Check if the social account is already linked
             const accountIndex = user.socialAccounts.findIndex(account => account.provider === 'google' && account.providerId === id);
@@ -125,10 +125,10 @@ exports.getUser = async (req, res) => {
             followersCount: followersCount
         };
 
-        console.log(userData);
+        // console.log(userData);
         res.json(userData);
     } catch (error) {
-        console.error('Error:', error);
+        // console.error('Error:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };

@@ -77,7 +77,7 @@ exports.getChatData = async (req, res) => {
 
     res.send({ data: messages });
   } catch (error) {
-    console.error('Error fetching chats:', error);
+    // console.error('Error fetching chats:', error);
     res.status(500).send({ message: 'Failed to fetch chats' });
   }
 };
@@ -220,7 +220,8 @@ exports.myChatData = async (req, res) => {
           chatDeleted:1,
           edited:1,
           isDeleted:1,
-          blocked:1
+          blocked:1,
+          forWhat:1
         }
       }
     ]);
@@ -263,7 +264,7 @@ exports.chatsSeen = async (req, res) => {
       res.status(404).send({ message: 'No messages found to update' });
     }
   } catch (error) {
-    console.error('Error updating message data:', error);
+    // console.error('Error updating message data:', error);
     res.status(500).send({ message: 'Failed to update message data' });
   }
 };
@@ -284,7 +285,7 @@ exports.deleteMessage = async (req, res) => {
       res.status(404).send({ message: 'Message not found' });
     }
   } catch (error) {
-    console.error('Error updating message data:', error);
+    // console.error('Error updating message data:', error);
     res.status(500).send({ message: 'Failed to update message data' });
   }
 };
@@ -316,7 +317,7 @@ exports.deleteChat = async (req, res) => {
       res.status(404).send({ message: 'No messages found to update' });
     }
   } catch (error) {
-    console.error('Error updating message data:', error);
+    // console.error('Error updating message data:', error);
     res.status(500).send({ message: 'Failed to update message data' });
   }
 };
@@ -337,7 +338,7 @@ exports.editMessage = async (req, res) => {
       res.status(404).send({ message: 'Message not found' });
     }
   } catch (error) {
-    console.error('Error updating message:', error);
+    // console.error('Error updating message:', error);
     res.status(500).send({ message: 'Failed to update message' });
   }
 };

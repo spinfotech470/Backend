@@ -125,7 +125,7 @@ exports.getAllPostsWithLikesAndComments = async (req, res) => {
 
         res.status(200).json(results);
     } catch (error) {
-        console.error(error);
+        // console.error(error);
         res.status(500).json({ error: 'Something went wrong' });
     }
 };

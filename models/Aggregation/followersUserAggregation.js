@@ -28,7 +28,7 @@ exports.getFollowersDetails = async (req, res) => {
         // console.log("results",results)
         res.status(200).json(results);
     } catch (error) {
-        console.error(error);
+        // console.error(error);
     }
 };
 

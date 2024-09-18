@@ -30,8 +30,6 @@ exports.createQuestion = async (req, res) => {
 
     let rowData = {};
 
-    console.log("Attempting to save the question to the database");
-
     // Handle image upload if exists in req.files
     if (req.files && req.files.image) {
       const imagePath = await utility.default.sendImageS3Bucket(
@@ -45,7 +43,6 @@ exports.createQuestion = async (req, res) => {
     const savedQuestion = await newQuestion.save();
     res.status(201).json(savedQuestion);
   } catch (error) {
-    console.error("Error saving question:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -55,9 +52,7 @@ exports.getQuestions = async (req, res) => {
   if (req.query) {
     try {
       const { createdBy } = req.query;
-      console.log("createdBy:", createdBy);
       const questions = await Question.find({ createdBy: createdBy });
-      console.log(questions);
       res.status(200).json(questions);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -111,7 +106,6 @@ exports.getPostsInfomations = async (req, res) => {
 
     res.json(response);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -144,7 +138,6 @@ exports.updateQuestion = async (req, res) => {
 
 // Delete a question by ID
 // exports.deleteQuestion = async (req, res) => {
-//   console.log("=-=-=-=-=-",req.query.id)
 //   try {
 //     const question = await Question.findByIdAndDelete(req.query.id);
 //     if (!question) {
@@ -157,7 +150,6 @@ exports.updateQuestion = async (req, res) => {
 // };
 
 exports.deleteQuestion = async (req, res) => {
-  console.log("=-=-=-=-=-", req.params.id);  // Log the ID from the path parameters
   try {
     const question = await Question.findByIdAndDelete(req.params.id); 
     if (!question) {
@@ -192,7 +184,6 @@ exports.likePost = async (req, res) => {
       post.likes = post.likes.filter((like) => !like.userId.equals(userId));
 
       await post.save();
-      console.log("Post is Unlike");
 
       return res.status(200).json({ message: "Post unliked", post });
     } else {
@@ -209,7 +200,6 @@ exports.likePost = async (req, res) => {
       });
       await notification.save();
       utility.default.sendNotificationMail(postInfo, senderInfo, type)
-      console.log("Post is like");
 
       return res.status(200).json({ message: "Post liked", post });
     }
@@ -247,8 +237,6 @@ exports.commentPost = async (req, res) => {
     await notification.save();
     // utility.default.sendNotificationMail(postInfo,senderInfo,type)
 
-    console.log("Comment added and notification created");
-
     return res.status(200).json({ message: "Comment added and Notification is created", post });
   } catch (error) {
     return res.status(500).json({ message: error.message });
@@ -273,7 +261,6 @@ exports.deleteComment = async (req, res) => {
 
     post.comments.pull(commentId);
     await post.save();
-    console.log("Comment deleted");
 
     return res.status(200).json({ message: "Comment deleted successfully" });
   } catch (error) {
@@ -300,7 +287,6 @@ exports.updateComment = async (req, res) => {
 
     comment.content = content;
     await post.save();
-    console.log("Comment updated");
 
     return res.status(200).json({ message: "Comment updated successfully", post });
   } catch (error) {
@@ -311,11 +297,9 @@ exports.updateComment = async (req, res) => {
 exports.likeComment = async (req, res) => {
   // const { postId, commentId } = req.query;
   const { postId, commentId, userId } = req.body;
-  console.log("PostId --------- ", postId)
 
   try {
     const post = await Question.findById(postId);
-    console.log("post --", post)
 
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
@@ -338,8 +322,6 @@ exports.likeComment = async (req, res) => {
       );
       await post.save();
 
-      console.log("Comment unliked");
-
       return res.status(200).json({ message: "Comment unliked", post });
     } else {
       // Like the comment
@@ -352,7 +334,6 @@ exports.likeComment = async (req, res) => {
         postId: post._id
       });
       await notification.save();
-      console.log("Comment liked");
 
       return res.status(200).json({ message: "Comment liked", post });
     }
@@ -373,7 +354,6 @@ exports.replyToComment = async (req, res) => {
     }
 
     const comment = post.comments.id(commentId);
-    console.log("comment ", comment)
     if (!comment) {
       return res.status(404).json({ message: "Comment not found" });
     }
@@ -390,8 +370,6 @@ exports.replyToComment = async (req, res) => {
       postId: post._id
     });
     await notification.save();
-
-    console.log("Reply added With Notification");
 
     return res.status(200).json({ message: "Reply added", post });
   } catch (error) {
@@ -417,10 +395,8 @@ exports.getRepliesOfComment = async (req, res) => {
     if (!comment) {
       throw new Error('Comment not found');
     }
-    console.log("User Details of replies : ", comment.replies)
     return comment.replies;
   } catch (error) {
-    console.error('Error fetching replies of comment:', error);
     throw error;
   }
 };
@@ -429,8 +405,6 @@ exports.forYou = async (req, res) => {
   try {
     const userId = req.body.userId; // Get the user ID from the request body
     const user = await User.findById(userId).populate('fellowing');
-
-    console.log(user)
 
     let posts;
 
