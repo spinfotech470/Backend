@@ -93,6 +93,7 @@ exports.editProfile = async (req, res) => {
       res.status(404).send({ message: 'User not found' });
     }
   } catch (error) {
+    console.log("=-=-=-=-=-=-=-",error)
     res.status(500).send({ message: 'Failed to update user data' });
   }
 };

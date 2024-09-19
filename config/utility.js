@@ -128,9 +128,6 @@ utility.sendImageS3BucketNew = async function (data, imagePath, imageName, image
   };
 
 
-
-
-
 // utility.sendImageS3Bucket = async function (data, imagePath) {
 //     console.log("Received image data: ", data);
 //     var deletePath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
@@ -258,55 +255,55 @@ utility.sendImageS3Bucket = async function (data, imagePath) {
 };
 
 utility.saveImageGCSBucket = async function (data, ext) {
-    try {
+    return new Promise((resolve, reject) => {
+        try {
+            if (!data || !data.imageData) {
+                return resolve({ success: false, code: "Missing image data" });
+            }
 
-        if (!data || !data.imageData) {
-            return { success: false, code: "Missing image data" };
+            // Extract the actual image data buffer
+            const imageBuffer = data.imageData.data;
+
+            // Determine ContentType based on file extension
+            let contentType = 'image/png'; // Default to PNG
+            if (ext === 'jpg' || ext === 'jpeg') {
+                contentType = 'image/jpeg';
+            } else if (ext === 'gif') {
+                contentType = 'image/gif';
+            } else if (ext === 'pdf') {
+                contentType = 'application/pdf';
+            }
+
+            // Upload to Google Cloud Storage
+            const bucket = storage.bucket('youthadda');
+            const file = bucket.file(data.imageName); // The full path to the image in the bucket
+
+            const stream = file.createWriteStream({
+                metadata: {
+                    contentType: contentType,
+                },
+                resumable: false, // Disable resumable uploads (can enable if needed)
+            });
+
+            stream.on('error', (err) => {
+                console.error('Error uploading to Google Cloud Storage:', err);
+                return reject({ success: false, code: 500, msg: "Error", err: err });
+            });
+
+            stream.on('finish', () => {
+                console.log(`Upload of ${data.imageName} successful.`);
+                return resolve({ success: true, code: 'Upload successful' });
+            });
+
+            // Write image data (Buffer) to Google Cloud Storage
+            stream.end(imageBuffer); // Pass the actual image buffer here
+
+        } catch (error) {
+            console.error('Error saving image:', error);
+            return reject({ success: false, code: 500, msg: "Error", err: error });
         }
-
-        // Extract the actual image data buffer
-        const imageBuffer = data.imageData.data;
-
-        // Determine ContentType based on file extension
-        let contentType = 'image/png'; // Default to PNG
-        if (ext === 'jpg' || ext === 'jpeg') {
-            contentType = 'image/jpeg';
-        } else if (ext === 'gif') {
-            contentType = 'image/gif';
-        } else if (ext === 'pdf') {
-            contentType = 'application/pdf';
-        }
-
-        // Upload to Google Cloud Storage
-        const bucket = storage.bucket(bucketName);
-        const file = bucket.file(data.imageName); // The full path to the image in the bucket
-
-        const stream = file.createWriteStream({
-            metadata: {
-                contentType: contentType,
-            },
-            resumable: false, // Disable resumable uploads (can enable if needed)
-            // No need to set public: true
-        });
-
-        stream.on('error', (err) => {
-            // console.error('Error uploading to Google Cloud Storage:', err);
-            throw err;
-        });
-
-        stream.on('finish', () => {
-        });
-
-        // Write image data (Buffer) to Google Cloud Storage
-        stream.end(imageBuffer);  // Pass the actual image buffer here
-
-        return { success: true, code: 'Upload successful' };
-    } catch (error) {
-        // console.error('Error saving image:', error);
-        return { success: false, code: 500, msg: "Error", err: error };
-    }
+    });
 };
-
 
 // utility.saveImageGCSBucket = async function (data, ext) {
 //     try {
