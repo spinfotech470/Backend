@@ -214,7 +214,6 @@ utility.sendImageS3BucketNew = async function (data, imagePath, imageName, image
 // };
 
 utility.sendImageS3Bucket = async function (data, imagePath) {
-    // console.log("Received image data: ", data);
     const deletePath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
     
     if (data) {
@@ -274,7 +273,7 @@ utility.saveImageGCSBucket = async function (data, ext) {
                 contentType = 'application/pdf';
             }
 
-            // Upload to Google Cloud Storage
+            // Upload to Google Cloud Storage bucketName
             const bucket = storage.bucket('youthadda');
             const file = bucket.file(data.imageName); // The full path to the image in the bucket
 
@@ -408,11 +407,10 @@ utility.saveImageGCSBucket = async function (data, ext) {
 
 utility.deleteImageGCSBucket = async function (imageName) {
     try {
-        const bucket = storage.bucket(bucketName);
+        const bucket = storage.bucket('youthadda');
         await bucket.file(imageName).delete();
         return { success: true, code: 'Deletion successful' };
     } catch (error) {
-        console.error('Error deleting image:', error);
         return { success: false, code: 500, msg: "Error", err: error };
     }
 };
@@ -435,7 +433,7 @@ utility.saveImageGCSBucketNew = async function (data, ext) {
       }
   
       // Upload to Google Cloud Storage
-      const bucket = storage.bucket(bucketName);
+      const bucket = storage.bucket('youthadda');
       const file = bucket.file(data.imageName); // The full path to the image in the bucket
   
       const stream = file.createWriteStream({
