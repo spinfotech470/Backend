@@ -260,43 +260,7 @@ io.on('connection', (socket) => {
                   }
                 }
               } else {
-              }
-
-
-              // const usersInCity = await User.find({ city: receiver });
-              // if (usersInCity.length > 0) {
-              //   usersInCity.forEach(async user => {
-              //     if (user.username !== socket.user.username) { // Exclude the sender
-              //       newMessage = new Message({
-              //         sender: socket.user.username,
-              //         receiver: user.username, // Send to each user in the city
-              //         message,
-              //         image: '',
-              //         type,
-              //         isSecret: data.isSecret,
-              //         hideMe: data.hideMe,
-              //         timestamp: new Date()
-              //       });
-
-              //       await newMessage.save();
-              //       io.to(user.username).emit('message', newMessage);
-              //     }
-              //   });
-              // } else {
-              // }
-            }
-            // newMessage = new Message({
-            //   sender: socket.user.username,
-            //   receiver,
-            //   message,
-            //   isSecret,
-            //   hideMe,
-            //   type,
-            //   timestamp: new Date()
-            // });
-            // await newMessage.save();
-            // io.to(receiver).emit('message', newMessage);
-          }
+              }}}
           else {
             // For non-image messages
             newMessage = new Message({
