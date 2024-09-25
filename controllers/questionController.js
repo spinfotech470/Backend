@@ -136,19 +136,6 @@ exports.updateQuestion = async (req, res) => {
   }
 };
 
-// Delete a question by ID
-// exports.deleteQuestion = async (req, res) => {
-//   try {
-//     const question = await Question.findByIdAndDelete(req.query.id);
-//     if (!question) {
-//       return res.status(404).json({ message: "Question not found" });
-//     }
-//     res.status(200).json({ message: "Question deleted successfully" });
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
 exports.deleteQuestion = async (req, res) => {
   try {
     const question = await Question.findByIdAndDelete(req.params.id); 
@@ -160,6 +147,181 @@ exports.deleteQuestion = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// report post-
+exports.reportQuestion = async (req, res) => {
+  try {
+    const question = await Question.findById(req.params.id);
+    
+    if (!question) {
+      return res.status(200).json({ message: "Question not found" });
+    }
+
+    // Check if user has already reported the question
+    if (question.report.includes(req.body.userId)) {
+      return res.status(200).json({ message: "You have already reported this question" });
+    }
+
+    // Add user ID to the report field
+    question.report.push(req.body.userId);
+    await question.save();
+
+    res.status(200).json({ message: "Question reported successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// report comment
+exports.reportComment = async (req, res) => {
+  try {
+    const { postId, commentId, userId } = req.body;
+
+    // Find the post by ID
+    const post = await Question.findById(postId);
+
+    if (!post) {
+      return res.status(200).json({ message: "Post not found" });
+    }
+
+    // Find the specific comment by ID within the post's comments array
+    const comment = post.comments.id(commentId);
+
+    if (!comment) {
+      return res.status(200).json({ message: "Comment not found" });
+    }
+
+    // Check if the user has already reported the comment
+    if (comment.report.includes(userId)) {
+      return res.status(200).json({ message: "You have already reported this comment" });
+    }
+
+    // Add the userId to the report field of the comment
+    comment.report.push(userId);
+
+    // Save the updated post with the reported comment
+    await post.save();
+
+    res.status(200).json({ message: "Comment reported successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// report reply
+exports.reportReply = async (req, res) => {
+  try {
+    const { postId, commentId, replyId, userId } = req.body;
+
+    // Find the post by ID
+    const post = await Question.findById(postId);
+
+    if (!post) {
+      return res.status(200).json({ message: "Post not found" });
+    }
+
+    // Find the specific comment by ID within the post's comments array
+    const comment = post.comments.id(commentId);
+
+    if (!comment) {
+      return res.status(200).json({ message: "Comment not found" });
+    }
+
+    // Find the specific reply by ID within the comment's replies array
+    const reply = comment.replies.id(replyId);
+
+    if (!reply) {
+      return res.status(200).json({ message: "Reply not found" });
+    }
+
+    // Check if the user has already reported the reply
+    if (reply.report.includes(userId)) {
+      return res.status(200).json({ message: "You have already reported this reply" });
+    }
+
+    // Add the userId to the report field of the reply
+    reply.report.push(userId);
+
+    // Save the updated post with the reported reply
+    await post.save();
+
+    res.status(200).json({ message: "Reply reported successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// delete comment
+exports.deleteCommentNew = async (req, res) => {
+  try {
+    const { postId, commentId } = req.body;
+
+    // Find the post by ID
+    const post = await Question.findById(postId);
+
+    if (!post) {
+      return res.status(200).json({ message: "Post not found" });
+    }
+
+    // Find the specific comment by ID within the post's comments array
+    const comment = post.comments.id(commentId);
+
+    if (!comment) {
+      return res.status(200).json({ message: "Comment not found" });
+    }
+
+    // Set the comment's isDeleted flag to true
+    comment.isDeleted = "true"; // or you can use boolean true
+
+    // Save the updated post
+    await post.save();
+
+    res.status(200).json({ message: "Comment deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+//delete reply
+exports.deleteReply = async (req, res) => {
+  try {
+    const { postId, commentId, replyId } = req.body;
+
+    // Find the post by ID
+    const post = await Question.findById(postId);
+
+    if (!post) {
+      return res.status(200).json({ message: "Post not found" });
+    }
+
+    // Find the specific comment by ID within the post's comments array
+    const comment = post.comments.id(commentId);
+
+    if (!comment) {
+      return res.status(200).json({ message: "Comment not found" });
+    }
+
+    // Find the specific reply by ID within the comment's replies array
+    const reply = comment.replies.id(replyId);
+
+    if (!reply) {
+      return res.status(200).json({ message: "Reply not found" });
+    }
+
+    // Set the reply's isDeleted flag to true
+    reply.isDeleted = "true"; // or you can use boolean true
+
+    // Save the updated post
+    await post.save();
+
+    res.status(200).json({ message: "Reply deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+
 
 
 // Like a post

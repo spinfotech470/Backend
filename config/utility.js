@@ -2,135 +2,61 @@
 var AWS = require('aws-sdk');
 const nodemailer = require('nodemailer');
 const csprng = require('csprng');
-const { Storage } = require('@google-cloud/storage');
-const path = require('path');
-const crypto = require('crypto');
 
-const storage = new Storage({
-    keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS, // Path to your service account key JSON file
-    projectId: 'youthadda@youthadda.iam.gserviceaccount.com', // Replace with your Google Cloud project ID
-});
-const bucketName = process.env.GCLOUD_STORAGE_BUCKET; // Your bucket name
+
 var utility = {};
 
 
-//google one
-utility.sendImageS3Bucket = async function (data, imagePath) {
-    const deletePath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
+// utility.sendImageS3Bucket = async function (data, imagePath) {
+//     console.log("actual image=here=-=-=======",data)
+//     var deletePath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
 
-    if (data) {
-        // Extract file metadata if data is a file object or buffer
-        let ext = '';
-        let imageData = data;
+//     if (data) {
 
-        if (imageData) {
-            let fileName = imageData.name || 'unknown';
-            let fileNameArr = fileName.split('.');
-            if (fileNameArr.length) {
-                ext = fileNameArr[fileNameArr.length - 1];
-            }
-        }
+//         var ext = '';
+//         var imageData = data;
+//         if (imageData) {
+//             var fileName = imageData.name;
+//             var fileNameArr = fileName.split('.');
 
-        // Default extension handling for specific imagePath
-        if (imagePath === "dairy") {
-            ext = "png";
-        }
+//             if (fileNameArr.length) {
+//                 ext = fileNameArr[fileNameArr.length - 1];
+//             }
+//         }
 
-        // Generate a unique filename
-        const imgRand = Date.now() + crypto.randomBytes(12).toString('hex') + '.' + ext;
-        const savePath = path.join(imagePath, imgRand); // Using `path` to handle file paths
+//         if (imagePath == "dairy") {
+//             ext = "png";
+//         }
 
-        // Save image to Google Cloud Storage
-        await utility.saveImageGCSBucket({
-            imageData: data, // Image data buffer
-            imageName: savePath
-        }, ext);
+//         var imgRand = Date.now() + (0, csprng)(24, 24) + '.' + ext;
+//         var path = './public/' + imagePath + '/' + imgRand;
 
-        // Optionally delete the old image
-        if (deletePath) {
-            await utility.deleteImageGCSBucket(deletePath);
-        }
+//         var savepath = imagePath + '/' + imgRand;
+//         // await imageData.mv(path);
+//         utility.saveImageS3Bucket({
+//             imageData: data,
+//             imageName: savepath
+//         }, ext);
 
-        return savePath;
-    }
-};
+//         if (deletePath) {
+//             await utility.deleteImageS3Bucket(deletePath);
+//         }
 
-//google two
-utility.saveImageGCSBucket = async function (data, ext) {
-    return new Promise((resolve, reject) => {
-        try {
-            if (!data || !data.imageData) {
-                return resolve({ success: false, code: "Missing image data" });
-            }
+//         return savepath;
+//     }
+// };
 
-            // Extract the actual image data buffer
-            const imageBuffer = data.imageData.data;
-
-            // Determine ContentType based on file extension
-            let contentType = 'image/png'; // Default to PNG
-            if (ext === 'jpg' || ext === 'jpeg') {
-                contentType = 'image/jpeg';
-            } else if (ext === 'gif') {
-                contentType = 'image/gif';
-            } else if (ext === 'pdf') {
-                contentType = 'application/pdf';
-            }
-
-            // Upload to Google Cloud Storage bucketName
-            const bucket = storage.bucket('youthadda');
-            const file = bucket.file(data.imageName); // The full path to the image in the bucket
-
-            const stream = file.createWriteStream({
-                metadata: {
-                    contentType: contentType,
-                },
-                resumable: false, // Disable resumable uploads (can enable if needed)
-            });
-
-            stream.on('error', (err) => {
-                console.error('Error uploading to Google Cloud Storage:', err);
-                return reject({ success: false, code: 500, msg: "Error", err: err });
-            });
-
-            stream.on('finish', () => {
-                console.log(`Upload of ${data.imageName} successful.`);
-                return resolve({ success: true, code: 'Upload successful' });
-            });
-
-            // Write image data (Buffer) to Google Cloud Storage
-            stream.end(imageBuffer); // Pass the actual image buffer here
-
-        } catch (error) {
-            console.error('Error saving image:', error);
-            return reject({ success: false, code: 500, msg: "Error", err: error });
-        }
-    });
-};
-
-//google three
-utility.deleteImageGCSBucket = async function (imageName) {
-    try {
-        const bucket = storage.bucket('youthadda');
-        await bucket.file(imageName).delete();
-        return { success: true, code: 'Deletion successful' };
-    } catch (error) {
-        return { success: false, code: 500, msg: "Error", err: error };
-    }
-};
-
-// aws chat one
 utility.sendImageS3BucketNew = async function (data, imagePath, imageName, imageType) {
-    // console.log("Received image data new: ", data);
-
     if (!data) {
         throw new Error('No image data provided');
     }
 
-    let ext = data.fileType || imageType;
+    // Extract file metadata
+    let ext = data.fileType || '' || imageType;
     let imageData = data.image || data; // Assuming image data is already a buffer
-    let fileName = data.name || imageName || 'unknown';
 
-    // Extract file extension if not provided
+    // If the fileType is not provided, extract from name or default
+    let fileName = data.name || 'unknown' || imageName;
     if (!ext && fileName) {
         let fileNameArr = fileName.split('.');
         if (fileNameArr.length) {
@@ -142,62 +68,95 @@ utility.sendImageS3BucketNew = async function (data, imagePath, imageName, image
         throw new Error('Could not determine the file extension');
     }
 
-    // Generate a unique filename
-    const imgRand = Date.now() + crypto.randomBytes(12).toString('hex') + '.' + ext;
-    const savePath = path.join(imagePath, imgRand); // Using `path` to handle file paths
+    let imgRand = Date.now() + csprng(24, 24) + '.' + ext;
+    let savepath = imagePath + '/' + imgRand;
 
-    // Save the image to Google Cloud Storage
-    await utility.saveImageGCSBucketNew({
-        imageData : data,
-        imageName: savePath
+    // Save image to S3
+    await utility.saveImageS3BucketNew({
+        imageData: imageData,
+        imageName: savepath
     }, ext);
 
-    return savePath;
+    return savepath;
 };
 
-// aws final
-utility.saveImageGCSBucketNew = async function (data, ext) {
+utility.sendImageS3Bucket = async function (data, imagePath) {
+    var deletePath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
+    if (data) {
+
+    // Extract file metadata if data is a file object or buffer
+    let ext = '';
+    let imageData = data;
+    if(imageData){
+        let fileName = imageData.name || 'unknown';
+        let fileNameArr = fileName.split('.');
+        if(fileNameArr.length){
+            ext = fileNameArr[fileNameArr.length - 1];
+        }
+
+    }
+    if (imagePath == "dairy") {
+        ext = "png";
+    }
+
+    let imgRand = Date.now() + (0, csprng)(24, 24) + '.' + ext;
+    let savepath = imagePath + '/' + imgRand;
+
+    // Assuming saveImageS3Bucket handles the actual saving to S3
+    await utility.saveImageS3Bucket({
+        imageData: data, // or data.buffer if it's a buffer
+        imageName: savepath
+    }, ext);
+
+    if (deletePath) {
+        await utility.deleteImageS3Bucket(deletePath);
+    }
+
+    return savepath;
+}
+};
+
+utility.saveImageS3BucketNew = function (data, ext) {
     try {
 
-        if (!data || !data.imageData) {
+        if (data && data.imageData) {
+            var s3 = new AWS.S3({
+                accessKeyId: process.env.S3_ACCESS_KEY,
+                secretAccessKey: process.env.S3_SECRET_KEY,
+                region: "ap-south-1"
+            });
+
+            // Determine the correct ContentType
+            let contentType = 'image/png'; // default to PNG
+            if (ext === 'jpg' || ext === 'jpeg') {
+                contentType = 'image/jpeg';
+            } else if (ext === 'gif') {
+                contentType = 'image/gif';
+            } else if (ext === 'pdf') {
+                contentType = 'application/pdf';
+            }
+
+            var params = {
+                Bucket: "youthadda",
+                Key: process.env.plateform + '/' + data.imageName,
+                Body: data.imageData,
+                ContentType: contentType
+            };
+
+            s3.putObject(params, function (err, data) {
+                if (err) {
+                    console.log(err);
+                    return { success: false, code: err };
+                } else {
+                    console.log(data);
+                    return { success: true, code: data };
+                }
+            });
+        } else {
             return { success: false, code: "Missing image data" };
         }
-
-        // Determine ContentType based on file extension
-        let contentType = 'image/png'; // default to PNG
-        if (ext === 'jpg' || ext === 'jpeg') {
-            contentType = 'image/jpeg';
-        } else if (ext === 'gif') {
-            contentType = 'image/gif';
-        } else if (ext === 'pdf') {
-            contentType = 'application/pdf';
-        }
-
-        // Upload to Google Cloud Storage
-        const bucket = storage.bucket('youthadda');
-        const file = bucket.file(data.imageName); // The full path to the image in the bucket
-
-        const stream = file.createWriteStream({
-            metadata: {
-                contentType: contentType,
-            },
-            resumable: false, // Disable resumable uploads (can enable if needed)
-        });
-
-        stream.on('error', (err) => {
-            console.error('Error uploading to Google Cloud Storage:', err);
-            throw err;
-        });
-
-        stream.on('finish', () => {
-        });
-
-        // Write image data (Buffer) to Google Cloud Storage
-        stream.end(data.imageData);
-
-        return { success: true, code: 'Upload successful' };
     } catch (error) {
-        console.error('Error saving image:', error);
+        console.error(error);
         return { success: false, code: 500, msg: "Error", err: error };
     }
 };
@@ -208,8 +167,8 @@ utility.saveImageS3Bucket = function (data, ext) {
         if (data) {
 
             var s3 = new AWS.S3({
-                accessKeyId: "AKIAU6GDZOCO3CGBLVU4",
-                secretAccessKey: "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",
+                accessKeyId: process.env.S3_ACCESS_KEY,
+                secretAccessKey: process.env.S3_SECRET_KEY,
                 region: "ap-south-1"
             });
 
@@ -217,7 +176,6 @@ utility.saveImageS3Bucket = function (data, ext) {
                 Bucket: "youthadda",
                 Key: process.env.plateform + '/' + data.imageName,
                 Body: data.imageData.data,
-                ACL: 'public-read'
             };
 
             if (ext == 'pdf' || ext == 'PDF') {
@@ -226,8 +184,10 @@ utility.saveImageS3Bucket = function (data, ext) {
 
             s3.putObject(params, function (err, data) {
                 if (err) {
+                    console.log(err);
                     return { success: false, code: err };
                 } else {
+                    console.log(data);
                     return { success: false, code: data };
                 }
             });
@@ -261,8 +221,10 @@ utility.deleteImageS3Bucket = async function (data) {
         try {
             await s3.deleteObject(params).promise();
         } catch (err) {
+            console.log("ERROR in file Deleting : " + JSON.stringify(err));
         }
     } catch (err) {
+        console.log("File not Found ERROR : " + err.code);
     }
 };
 
@@ -276,48 +238,70 @@ utility.getImage = function (filename, req, res) {
     }
 };
 
-utility.sendNotificationMail = async function (postInfo, senderInfo, type, token, req, res) {
+// utility.sendEmail = function (data) {
+//     var sgMail = require('@sendgrid/mail');
+//     var SENDGRID_API_KEY = 'SG.CBXp8pQQMlFHEQSw98';
+//     sgMail.setApiKey(SENDGRID_API_KEY);
 
+//     var htmlBody = data.html;
+
+//     var msg = {
+//         to: data.to,
+//         from: 'abc@gmail.com',
+//         subject: data.subject,
+//         html: htmlBody
+//     };
+
+//     sgMail.send(msg).then(function (response) {
+//         console.log(response);
+//     }).catch(function (error) {
+//         console.log(error);
+//     });
+// };
+
+utility.sendNotificationMail = function async(postInfo, senderInfo, type, token, req, res){
     try {
-        // Check if the sender is the same as the post creator
-        if (senderInfo._id === postInfo.createdByDetails._id) {
-            return; // Exit the function without sending an email
+      let transporter = nodemailer.createTransport({
+        service: "hotmail",
+        auth: {
+          user: "rahulacharya978@outlook.com",
+          pass: "eeeeeeeeeex"
         }
+      });
 
-        let transporter = nodemailer.createTransport({
-            service: "hotmail",
-            auth: {
-                user: "rahulacharya978@outlook.com",
-                pass: "Rahul@outlook.com"
-            }
-        });
-
-        const mailOptions = {
-            from: 'rahulacharya978@outlook.com',
-            to: postInfo.createdByDetails.email,
-            subject: 'Notification Mail From YouthAdda',
-            html: `<p>Hello ${postInfo.createdByDetails.name},</p>
-                   <p>Notification From YouthAdda ${type} on your Post by ${type === 'like' ? senderInfo.name : "SomeOne Check Now By Clicking below post"}</p>
-                   <br/>
-                   <a href="http://localhost:3000/questionDetails/${postInfo._id}" target="_blank" style="display:block; text-decoration:none; color:inherit;">
-               <div style="box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); padding: 10px; border-radius: 5px;">
-                 <p style="margin: 0; font-weight: bold;">${postInfo.questionTitle}</p>
-                 <img src="/${postInfo.imgUrl}" alt="Post Image" style="width: 100%; max-width: 600px; margin-top: 10px; border-radius: 5px;"/>
-               </div>
-             </a>`
-        };
-
-        transporter.sendMail(mailOptions, function (error, info) {
-            if (error) {
-                res.send({ code: code.fail, msg: "Error", data: error });
-            } else {
-                res.send({ code: code.success, msg: "Done", data: info });
-            }
-        });
+      const mailOptions = {
+        from: 'rahulacharya978@outlook.com',
+        to: postInfo.createdByDetails.email,
+        subject: 'Notification Mail From YouthAdda',
+        html: `<p>Hello ${postInfo.createdByDetails.name},</p>
+               <p>Notification From YouthAdda ${type} on your Post by ${type === 'like' ? senderInfo.name : "SomeOne Check Now By Clicking below post"}</p>
+               <br/>
+               <a href="http://localhost:3000" target="_blank" style="display:block; text-decoration:none; color:inherit;">
+           <div style="box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); padding: 10px; border-radius: 5px;">
+             <p style="margin: 0; font-weight: bold;">${postInfo.questionTitle}</p>
+             <img src="https://youthadda.s3.ap-south-1.amazonaws.com/undefined/${postInfo.imgUrl}" alt="Post Image" style="width: 100%; max-width: 600px; margin-top: 10px; border-radius: 5px;"/>
+           </div>
+         </a>`
+      };
+      transporter.sendMail(mailOptions, function (error, info) {
+  
+        // if (error) {
+        // console.log(error)
+        //   res.send({ code: code.fail, msg: "Error", data: error });
+        // } else {
+        //   res.send({ code: code.success, msg: "Done", data: info });
+        // }
+        // if (info) {
+        //   res.send({ code: code.success, msg: "done", data: info });
+        // }
+        // else {
+        //   res.send({ code: code.fail, msg: "MAil has been send", data: error });
+        // }
+      });
     } catch (error) {
-        res.send({ code: code.success, msg: error });
+        console.log(error)
+      res.send({ code: code.success, msg: error });
     }
-};
-
+  }
 
 exports.default = utility;

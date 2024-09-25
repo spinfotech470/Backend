@@ -11,6 +11,8 @@ const replySchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     content: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
+    isDeleted:{ type: String, default:"false" },
+    report: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     likes: [likeSchema]
 }, { timestamps: true });
 
@@ -21,6 +23,8 @@ const commentSchema = new mongoose.Schema({
     content: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
     replies: [replySchema],
+    isDeleted:{ type: String, default:"false" },
+    report: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     likes: [likeSchema]
 }, { timestamps: true });
 
@@ -38,6 +42,7 @@ const postSchema = new mongoose.Schema({
     likes: [likeSchema],
     comments: [commentSchema],
     shares: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],  // Store userIds who shared the post
+    report: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     score: { type: Number, default: 0 },
     isDeleted:{ type: String, default:"false" },
     isSecret: { type: String, default : "false"},

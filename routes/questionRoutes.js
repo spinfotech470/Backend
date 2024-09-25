@@ -1,5 +1,5 @@
 const express = require('express');
-const { createQuestion, getQuestions, getAllQuestions,updateQuestion,deleteQuestion, getPostInfo, forYou, share, deleteQuestionOrPost} = require('../controllers/questionController');
+const { createQuestion, getQuestions, getAllQuestions,updateQuestion,deleteQuestion, getPostInfo, forYou, share, deleteQuestionOrPost, reportQuestion, reportComment, deleteCommentNew, deleteReply, reportReply } = require('../controllers/questionController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 const { getFollowersDetails } = require('../models/Aggregation/followersUserAggregation')
 
@@ -19,6 +19,18 @@ router.post('/share', share);
 
 // Delete a question by ID
 router.delete('/:id', deleteQuestion);
+router.post('/reportquestion/:id', reportQuestion);
+
+
+router.post('/reportcomment', reportComment);
+router.post('/deletecomment', deleteCommentNew);
+
+router.post('/reportreply', reportReply);
+router.post('/deletereply', deleteReply);
+
+
+
+
 router.post('/deletePostQuestions', deleteQuestionOrPost);
 
 
