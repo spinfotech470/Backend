@@ -1,6 +1,7 @@
 const { response } = require('express');
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const Question = require('../models/PostSchema')
 const Message = require('../models/Message');
 const utility = require("../config/utility");
 const ContactUs = require("../models/ContactUs")
@@ -292,6 +293,27 @@ exports.contactUs = async (req, res) => {
     }
   } catch (error) {
     res.status(500).send({ message: 'Failed to send your form' });
+  }
+};
+
+exports.getUserStatistics = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments({});
+    const totalPost = await Question.countDocuments({});
+    const maleUsers = await User.countDocuments({ gender: 'male' });
+    const femaleUsers = await User.countDocuments({ gender: 'female' });
+    const activeUsers = await User.countDocuments({ isActive: true });
+
+    // Sending the statistics back as a JSON response
+    res.status(200).json({
+      totalUsers,
+      maleUsers,
+      femaleUsers,
+      activeUsers,
+      totalPost,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 

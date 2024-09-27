@@ -34,7 +34,8 @@ const userSchema = new mongoose.Schema({
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   posts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }],
   fellowing: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  followersDetails : [followersSchema]
+  followersDetails : [followersSchema],
+  userType : {type: String, default : "0" }
 });
 
 const User = mongoose.model('User', userSchema);
