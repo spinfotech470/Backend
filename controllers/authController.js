@@ -12,9 +12,7 @@ exports.signup = async (req, res) => {
     try {
         const savedUser = await user.save();
         res.status(201).json(savedUser);
-        // console.log(savedUser);
     } catch (error) {
-        // console.log(error)
         res.status(400).json({ message: error.message });
     }
 };
@@ -31,14 +29,14 @@ exports.login = async (req, res) => {
 
         // console.log(user, "Login successfully");
 
-        const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET, { expiresIn: '24h' });
-       
+        const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET);
+
+
         res.json({ user: user.toObject(), token });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
-
 
 // Social Login
 exports.socialLogin = async (req, res) => {
@@ -54,9 +52,9 @@ exports.socialLogin = async (req, res) => {
         if (!user) {
             user = new User({
                 email,
-                username: email.replace("@gmail.com",""),
-                email:email,
-                name:name,
+                username: email.replace("@gmail.com", ""),
+                email: email,
+                name: name,
                 socialAccounts: [{
                     provider: 'google',
                     providerId: id,
@@ -66,7 +64,7 @@ exports.socialLogin = async (req, res) => {
                     profilePicture: picture
                 }]
             });
-            const  socailUser = await user.save();
+            const socailUser = await user.save();
 
             // console.log("socailUser",socailUser)
         } else {
@@ -92,13 +90,13 @@ exports.socialLogin = async (req, res) => {
             await user.save();
         }
 
-        const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET, { expiresIn: '24h' });
+        const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET);
+
         res.json({ token, user });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
-
 
 // Get User Profile
 exports.getUser = async (req, res) => {

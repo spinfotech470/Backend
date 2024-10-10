@@ -1,11 +1,9 @@
-// controllers/questionController.js
 const mongoose = require("mongoose");
 const Question = require("../models/PostSchema");
 const Notification = require("../models/notification");
 const User = require("../models/User")
 const utility = require("../config/utility")
 
-// Create a new question
 exports.createQuestion = async (req, res) => {
   try {
     const {
@@ -16,7 +14,7 @@ exports.createQuestion = async (req, res) => {
       opinionFrom,
     } = req.body;
 
-    const { _id, user } = req.body; // Destructure _id and user from req.body
+    const { _id, user } = req.body;
 
     const newQuestion = new Question({
       askanonymously,
@@ -30,14 +28,13 @@ exports.createQuestion = async (req, res) => {
 
     let rowData = {};
 
-    // Handle image upload if exists in req.files
     if (req.files && req.files.image) {
       const imagePath = await utility.default.sendImageS3Bucket(
         req.files.image,
         'QuestionPost',
-        rowData.image || '' // Use existing image path if rowData.image exists
+        rowData.image || ''
       );
-      newQuestion.imgUrl = imagePath; // Assign image path to newQuestion
+      newQuestion.imgUrl = imagePath;
     }
 
     const savedQuestion = await newQuestion.save();
@@ -47,7 +44,6 @@ exports.createQuestion = async (req, res) => {
   }
 };
 
-// Get all questions
 exports.getQuestions = async (req, res) => {
   if (req.query) {
     try {
@@ -63,36 +59,35 @@ exports.getQuestions = async (req, res) => {
 exports.getAllQuestions = async (req, res) => {
   const userId = req.body.userId;
   try {
-    const questions = await Question.find();
+    const questions = await Question.find({isDeleted:"false"});
     res.status(200).json(questions);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+
 exports.getPostsInfomations = async (req, res) => {
   try {
     const postId = req.body.postId;
 
-    // Fetch the post and populate createdBy and likes.userId with user details
     const post = await Question.findById(postId)
-      .populate('createdBy', 'name username email gender blockedUsers profileImg socialAccounts') // Populate createdBy details
-      .populate('likes.userId', 'name username email gender blockedUsers profileImg socialAccounts') // Populate likes.userId details
+      .populate('createdBy', 'name username email gender blockedUsers profileImg socialAccounts') 
+      .populate('likes.userId', 'name username email gender blockedUsers profileImg socialAccounts')
       .populate({
         path: 'comments.userId', 
-        select: 'name username email gender blockedUsers profileImg socialAccounts' // Populate comments.userId details
+        select: 'name username email gender blockedUsers profileImg socialAccounts'
       })
       .populate({
         path: 'comments.likes.userId', 
-        select: 'name username email gender blockedUsers profileImg socialAccounts' // Populate comments.likes.userId details
+        select: 'name username email gender blockedUsers profileImg socialAccounts'
       })
       .exec();
 
     if (!post) {
-      return res.status(404).json({ message: 'Post not found' });
+      return res.status(200).json({ message: 'Post not found' });
     }
 
-    // Prepare response with user details
     const response = {
       ...post.toObject(),
       createdByDetails: post.createdBy, // Add createdBy details
@@ -110,7 +105,6 @@ exports.getPostsInfomations = async (req, res) => {
   }
 };
 
-
 exports.getPostInfo = async (req, res) => {
   try {
     const questions = await Question.findById({ _id: req.body.postId });
@@ -120,7 +114,6 @@ exports.getPostInfo = async (req, res) => {
   }
 };
 
-// Update a question by ID
 exports.updateQuestion = async (req, res) => {
   try {
     const question = await Question.findByIdAndUpdate(req.params.id, req.body, {
@@ -128,7 +121,7 @@ exports.updateQuestion = async (req, res) => {
       runValidators: true,
     });
     if (!question) {
-      return res.status(404).json({ message: "Question not found" });
+      return res.status(200).json({ message: "Question not found" });
     }
     res.status(200).json(question);
   } catch (error) {
@@ -140,7 +133,7 @@ exports.deleteQuestion = async (req, res) => {
   try {
     const question = await Question.findByIdAndDelete(req.params.id); 
     if (!question) {
-      return res.status(404).json({ message: "Question not found" });
+      return res.status(200).json({ message: "Question not found" });
     }
     res.status(200).json({ message: "Question deleted successfully" });
   } catch (error) {
@@ -148,7 +141,6 @@ exports.deleteQuestion = async (req, res) => {
   }
 };
 
-// report post-
 exports.reportQuestion = async (req, res) => {
   try {
     const question = await Question.findById(req.params.id);
@@ -157,12 +149,10 @@ exports.reportQuestion = async (req, res) => {
       return res.status(200).json({ message: "Question not found" });
     }
 
-    // Check if user has already reported the question
     if (question.report.includes(req.body.userId)) {
       return res.status(200).json({ message: "You have already reported this question" });
     }
 
-    // Add user ID to the report field
     question.report.push(req.body.userId);
     await question.save();
 
@@ -172,34 +162,28 @@ exports.reportQuestion = async (req, res) => {
   }
 };
 
-// report comment
 exports.reportComment = async (req, res) => {
   try {
     const { postId, commentId, userId } = req.body;
 
-    // Find the post by ID
     const post = await Question.findById(postId);
 
     if (!post) {
       return res.status(200).json({ message: "Post not found" });
     }
 
-    // Find the specific comment by ID within the post's comments array
     const comment = post.comments.id(commentId);
 
     if (!comment) {
       return res.status(200).json({ message: "Comment not found" });
     }
 
-    // Check if the user has already reported the comment
     if (comment.report.includes(userId)) {
       return res.status(200).json({ message: "You have already reported this comment" });
     }
 
-    // Add the userId to the report field of the comment
     comment.report.push(userId);
 
-    // Save the updated post with the reported comment
     await post.save();
 
     res.status(200).json({ message: "Comment reported successfully" });
@@ -208,41 +192,34 @@ exports.reportComment = async (req, res) => {
   }
 };
 
-// report reply
 exports.reportReply = async (req, res) => {
   try {
     const { postId, commentId, replyId, userId } = req.body;
 
-    // Find the post by ID
     const post = await Question.findById(postId);
 
     if (!post) {
       return res.status(200).json({ message: "Post not found" });
     }
 
-    // Find the specific comment by ID within the post's comments array
     const comment = post.comments.id(commentId);
 
     if (!comment) {
       return res.status(200).json({ message: "Comment not found" });
     }
 
-    // Find the specific reply by ID within the comment's replies array
     const reply = comment.replies.id(replyId);
 
     if (!reply) {
       return res.status(200).json({ message: "Reply not found" });
     }
 
-    // Check if the user has already reported the reply
     if (reply.report.includes(userId)) {
       return res.status(200).json({ message: "You have already reported this reply" });
     }
 
-    // Add the userId to the report field of the reply
     reply.report.push(userId);
 
-    // Save the updated post with the reported reply
     await post.save();
 
     res.status(200).json({ message: "Reply reported successfully" });
@@ -251,29 +228,24 @@ exports.reportReply = async (req, res) => {
   }
 };
 
-// delete comment
 exports.deleteCommentNew = async (req, res) => {
   try {
     const { postId, commentId } = req.body;
 
-    // Find the post by ID
     const post = await Question.findById(postId);
 
     if (!post) {
       return res.status(200).json({ message: "Post not found" });
     }
 
-    // Find the specific comment by ID within the post's comments array
     const comment = post.comments.id(commentId);
 
     if (!comment) {
       return res.status(200).json({ message: "Comment not found" });
     }
 
-    // Set the comment's isDeleted flag to true
-    comment.isDeleted = "true"; // or you can use boolean true
+    comment.isDeleted = "true";
 
-    // Save the updated post
     await post.save();
 
     res.status(200).json({ message: "Comment deleted successfully" });
@@ -282,36 +254,30 @@ exports.deleteCommentNew = async (req, res) => {
   }
 };
 
-//delete reply
 exports.deleteReply = async (req, res) => {
   try {
     const { postId, commentId, replyId } = req.body;
 
-    // Find the post by ID
     const post = await Question.findById(postId);
 
     if (!post) {
       return res.status(200).json({ message: "Post not found" });
     }
 
-    // Find the specific comment by ID within the post's comments array
     const comment = post.comments.id(commentId);
 
     if (!comment) {
       return res.status(200).json({ message: "Comment not found" });
     }
 
-    // Find the specific reply by ID within the comment's replies array
     const reply = comment.replies.id(replyId);
 
     if (!reply) {
       return res.status(200).json({ message: "Reply not found" });
     }
 
-    // Set the reply's isDeleted flag to true
-    reply.isDeleted = "true"; // or you can use boolean true
+    reply.isDeleted = "true";
 
-    // Save the updated post
     await post.save();
 
     res.status(200).json({ message: "Reply deleted successfully" });
@@ -320,11 +286,6 @@ exports.deleteReply = async (req, res) => {
   }
 };
 
-
-
-
-
-// Like a post
 exports.likePost = async (req, res) => {
   const { postId } = req.query;
   const userId = req.body.createdBy;
@@ -338,22 +299,18 @@ exports.likePost = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Check if the user already liked the post
     const alreadyLiked = post.likes.find((like) => like.userId.equals(userId));
 
     if (alreadyLiked) {
-      // Unlike the post
       post.likes = post.likes.filter((like) => !like.userId.equals(userId));
 
       await post.save();
 
       return res.status(200).json({ message: "Post unliked", post });
     } else {
-      // Like the post
       post.likes.push({ userId });
       await post.save();
 
-      // Send notification to the post owner (commented out for now)
       const notification = new Notification({
         recipient: post.createdBy,
         sender: userId,
@@ -369,7 +326,6 @@ exports.likePost = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
-// Get likes of a post
 
 exports.commentPost = async (req, res) => {
   const { postId } = req.query;
@@ -385,19 +341,17 @@ exports.commentPost = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Add the comment
     const newComment = { userId, content };
     post.comments.push(newComment);
     await post.save();
-    // Create a notification
     const notification = new Notification({
       recipient: post.createdBy,
       sender: userId,
       type: 'Comment',
-      postId: post._id
+      postId: post._id,
+      content:content,
     });
     await notification.save();
-    // utility.default.sendNotificationMail(postInfo,senderInfo,type)
 
     return res.status(200).json({ message: "Comment added and Notification is created", post });
   } catch (error) {
@@ -431,7 +385,6 @@ exports.deleteComment = async (req, res) => {
 };
 
 exports.updateComment = async (req, res) => {
-  // const { } = req.query;
   const { content, postId, commentId } = req.body;
 
   try {
@@ -457,7 +410,6 @@ exports.updateComment = async (req, res) => {
 };
 
 exports.likeComment = async (req, res) => {
-  // const { postId, commentId } = req.query;
   const { postId, commentId, userId } = req.body;
 
   try {
@@ -472,13 +424,11 @@ exports.likeComment = async (req, res) => {
       return res.status(404).json({ message: "Comment not found" });
     }
 
-    // Check if the user already liked the comment
     const alreadyLiked = comment.likes.find((like) =>
       like.userId.equals(userId)
     );
 
     if (alreadyLiked) {
-      // Unlike the comment
       comment.likes = comment.likes.filter(
         (like) => !like.userId.equals(userId)
       );
@@ -486,7 +436,6 @@ exports.likeComment = async (req, res) => {
 
       return res.status(200).json({ message: "Comment unliked", post });
     } else {
-      // Like the comment
       comment.likes.push({ userId });
       await post.save();
       const notification = new Notification({
@@ -506,7 +455,6 @@ exports.likeComment = async (req, res) => {
 };
 
 exports.replyToComment = async (req, res) => {
-  // const { postId } = req.query;
   const { userId, content, commentId, postId } = req.body;
   try {
     const post = await Question.findById(postId);
@@ -520,7 +468,6 @@ exports.replyToComment = async (req, res) => {
       return res.status(404).json({ message: "Comment not found" });
     }
 
-    // Add the reply
     const newReply = { userId, content };
     comment.replies.push(newReply);
     await post.save();
@@ -565,19 +512,15 @@ exports.getRepliesOfComment = async (req, res) => {
 
 exports.forYou = async (req, res) => {
   try {
-    const userId = req.body.userId; // Get the user ID from the request body
+    const userId = req.body.userId;
     const user = await User.findById(userId).populate('fellowing');
 
     let posts;
 
     if (user.fellowing.length === 0) {
-      // If the user is not following anyone, show all posts
       posts = await Question.find().populate('createdBy');
     } else {
-      // Get the IDs of users the current user is following
       const followingIds = user.fellowing.map(followedUser => followedUser._id);
-
-      // Show posts only from users they follow
       posts = await Question.find({ createdBy: { $in: followingIds } }).populate('createdBy');
     }
 
@@ -586,29 +529,6 @@ exports.forYou = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-
-// exports.share = async (req, res) => {
-//   try {
-//     const { postId } = req.body;
-
-//     const post = await Question.findById(postId);
-//     if (!post) {
-//       return res.status(404).json({ error: 'Post not found' });
-//     }
-
-//     post.share += 1;
-
-//     const likesCount = post.likes?.length || 0;
-//     const commentsCount = post.comments?.length || 0;
-//     post.score = (likesCount * 1) + (commentsCount * 10) + (post.share * 20);
-
-//     await post.save();
-
-//     res.status(200).json(post);
-//   } catch (error) {
-//     res.status(500).json({ error: 'Internal server error' });
-//   }
-// };
 
 exports.share = async (req, res) => {
   const postId = req.body.postId;
@@ -636,7 +556,7 @@ exports.deleteQuestionOrPost = async (req, res) => {
       isDeleted:"true"
     });
     if (!question) {
-      return res.status(404).json({ message: "Question not found" });
+      return res.status(200).json({ message: "Question not found" });
     }
     res.status(200).json(question);
   } catch (error) {

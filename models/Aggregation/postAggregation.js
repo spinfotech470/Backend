@@ -4,6 +4,9 @@ const Post = require("../PostSchema");
 exports.getAllPostsWithLikesAndComments = async (req, res) => {
     try {
         const results = await Post.aggregate([
+            {$match: {
+                isDeleted: "false"
+            }},
             {
                 $lookup: {
                     from: 'users',

@@ -6,46 +6,6 @@ const csprng = require('csprng');
 
 var utility = {};
 
-
-// utility.sendImageS3Bucket = async function (data, imagePath) {
-//     console.log("actual image=here=-=-=======",data)
-//     var deletePath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
-
-//     if (data) {
-
-//         var ext = '';
-//         var imageData = data;
-//         if (imageData) {
-//             var fileName = imageData.name;
-//             var fileNameArr = fileName.split('.');
-
-//             if (fileNameArr.length) {
-//                 ext = fileNameArr[fileNameArr.length - 1];
-//             }
-//         }
-
-//         if (imagePath == "dairy") {
-//             ext = "png";
-//         }
-
-//         var imgRand = Date.now() + (0, csprng)(24, 24) + '.' + ext;
-//         var path = './public/' + imagePath + '/' + imgRand;
-
-//         var savepath = imagePath + '/' + imgRand;
-//         // await imageData.mv(path);
-//         utility.saveImageS3Bucket({
-//             imageData: data,
-//             imageName: savepath
-//         }, ext);
-
-//         if (deletePath) {
-//             await utility.deleteImageS3Bucket(deletePath);
-//         }
-
-//         return savepath;
-//     }
-// };
-
 utility.sendImageS3BucketNew = async function (data, imagePath, imageName, imageType) {
     if (!data) {
         throw new Error('No image data provided');
@@ -84,36 +44,36 @@ utility.sendImageS3Bucket = async function (data, imagePath) {
     var deletePath = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
     if (data) {
 
-    // Extract file metadata if data is a file object or buffer
-    let ext = '';
-    let imageData = data;
-    if(imageData){
-        let fileName = imageData.name || 'unknown';
-        let fileNameArr = fileName.split('.');
-        if(fileNameArr.length){
-            ext = fileNameArr[fileNameArr.length - 1];
+        // Extract file metadata if data is a file object or buffer
+        let ext = '';
+        let imageData = data;
+        if (imageData) {
+            let fileName = imageData.name || 'unknown';
+            let fileNameArr = fileName.split('.');
+            if (fileNameArr.length) {
+                ext = fileNameArr[fileNameArr.length - 1];
+            }
+
+        }
+        if (imagePath == "dairy") {
+            ext = "png";
         }
 
+        let imgRand = Date.now() + (0, csprng)(24, 24) + '.' + ext;
+        let savepath = imagePath + '/' + imgRand;
+
+        // Assuming saveImageS3Bucket handles the actual saving to S3
+        await utility.saveImageS3Bucket({
+            imageData: data, // or data.buffer if it's a buffer
+            imageName: savepath
+        }, ext);
+
+        if (deletePath) {
+            await utility.deleteImageS3Bucket(deletePath);
+        }
+
+        return savepath;
     }
-    if (imagePath == "dairy") {
-        ext = "png";
-    }
-
-    let imgRand = Date.now() + (0, csprng)(24, 24) + '.' + ext;
-    let savepath = imagePath + '/' + imgRand;
-
-    // Assuming saveImageS3Bucket handles the actual saving to S3
-    await utility.saveImageS3Bucket({
-        imageData: data, // or data.buffer if it's a buffer
-        imageName: savepath
-    }, ext);
-
-    if (deletePath) {
-        await utility.deleteImageS3Bucket(deletePath);
-    }
-
-    return savepath;
-}
 };
 
 utility.saveImageS3BucketNew = function (data, ext) {
@@ -238,42 +198,21 @@ utility.getImage = function (filename, req, res) {
     }
 };
 
-// utility.sendEmail = function (data) {
-//     var sgMail = require('@sendgrid/mail');
-//     var SENDGRID_API_KEY = 'SG.CBXp8pQQMlFHEQSw98';
-//     sgMail.setApiKey(SENDGRID_API_KEY);
-
-//     var htmlBody = data.html;
-
-//     var msg = {
-//         to: data.to,
-//         from: 'abc@gmail.com',
-//         subject: data.subject,
-//         html: htmlBody
-//     };
-
-//     sgMail.send(msg).then(function (response) {
-//         console.log(response);
-//     }).catch(function (error) {
-//         console.log(error);
-//     });
-// };
-
-utility.sendNotificationMail = function async(postInfo, senderInfo, type, token, req, res){
+utility.sendNotificationMail = function async(postInfo, senderInfo, type, token, req, res) {
     try {
-      let transporter = nodemailer.createTransport({
-        service: "hotmail",
-        auth: {
-          user: "rahulacharya978@outlook.com",
-          pass: "eeeeeeeeeex"
-        }
-      });
+        let transporter = nodemailer.createTransport({
+            service: "hotmail",
+            auth: {
+                user: "rahulacharya978@outlook.com",
+                pass: "eeeeeeeeeex"
+            }
+        });
 
-      const mailOptions = {
-        from: 'rahulacharya978@outlook.com',
-        to: postInfo.createdByDetails.email,
-        subject: 'Notification Mail From YouthAdda',
-        html: `<p>Hello ${postInfo.createdByDetails.name},</p>
+        const mailOptions = {
+            from: 'rahulacharya978@outlook.com',
+            to: postInfo.createdByDetails.email,
+            subject: 'Notification Mail From YouthAdda',
+            html: `<p>Hello ${postInfo.createdByDetails.name},</p>
                <p>Notification From YouthAdda ${type} on your Post by ${type === 'like' ? senderInfo.name : "SomeOne Check Now By Clicking below post"}</p>
                <br/>
                <a href="http://localhost:3000" target="_blank" style="display:block; text-decoration:none; color:inherit;">
@@ -282,26 +221,26 @@ utility.sendNotificationMail = function async(postInfo, senderInfo, type, token,
              <img src="https://youthadda.s3.ap-south-1.amazonaws.com/undefined/${postInfo.imgUrl}" alt="Post Image" style="width: 100%; max-width: 600px; margin-top: 10px; border-radius: 5px;"/>
            </div>
          </a>`
-      };
-      transporter.sendMail(mailOptions, function (error, info) {
-  
-        // if (error) {
-        // console.log(error)
-        //   res.send({ code: code.fail, msg: "Error", data: error });
-        // } else {
-        //   res.send({ code: code.success, msg: "Done", data: info });
-        // }
-        // if (info) {
-        //   res.send({ code: code.success, msg: "done", data: info });
-        // }
-        // else {
-        //   res.send({ code: code.fail, msg: "MAil has been send", data: error });
-        // }
-      });
+        };
+        transporter.sendMail(mailOptions, function (error, info) {
+
+            // if (error) {
+            // console.log(error)
+            //   res.send({ code: code.fail, msg: "Error", data: error });
+            // } else {
+            //   res.send({ code: code.success, msg: "Done", data: info });
+            // }
+            // if (info) {
+            //   res.send({ code: code.success, msg: "done", data: info });
+            // }
+            // else {
+            //   res.send({ code: code.fail, msg: "MAil has been send", data: error });
+            // }
+        });
     } catch (error) {
         console.log(error)
-      res.send({ code: code.success, msg: error });
+        res.send({ code: code.success, msg: error });
     }
-  }
+}
 
 exports.default = utility;

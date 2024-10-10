@@ -18,7 +18,7 @@ const messageSchema = new mongoose.Schema({
   replyTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Message' },
   blocked: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
    // Reference to the original message being replied to
-});
+}, { timestamps: true });
 
 
 module.exports = mongoose.model('Message', messageSchema);

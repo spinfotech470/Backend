@@ -7,7 +7,5 @@ router.post('/userInfo', userInfo);
 router.post('/follow', followUser);
 router.post('/findFriends', searchUsers);
 
-// router.post('/users/unfollow', unfollowUser);
-// router.get('/users/following', getFellowingUsers);
 
 module.exports = router;

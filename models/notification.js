@@ -10,6 +10,7 @@ const notificationSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
     read: { type: Boolean, default: false },
     mail: { type: Boolean, default: false },
+    content : {type: String}
 });
 
 const Notification = mongoose.model('Notification', notificationSchema);
