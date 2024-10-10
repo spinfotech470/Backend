@@ -39,9 +39,9 @@ app.use(express.json({ extended: false }));
 
 // Define Routes
 app.use("/api/auth", userRoutes);
-app.use("/api/questions", questionRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api", homeRoutes);
+// app.use("/api/questions", questionRoutes);
+// app.use("/api/users", userRoutes);
+// app.use("/api", homeRoutes);
 app.use("/api", chatRoutes);
 app.use("/users", fellowRoutes);
 app.use("/", NewUserRoutes);
