@@ -19,7 +19,7 @@ exports.signup = async (req, res) => {
 
 // Social Login
 exports.socialLogin = async (req, res) => {
-    console.log("process.env.TOKEN_SECRET",process.env.TOKEN_SECRET)
+
     const { id, email, name, given_name, family_name, picture, verified_email } = req.body;
 
     if (!verified_email) {
