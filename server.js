@@ -52,7 +52,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "*", // Allow requests from your frontend's origin
+    origin: "https://www.youthadda.co/api", // Allow requests from your frontend's origin
     methods: ["GET", "POST"],
     credentials: true, // If you need to allow credentials (cookies, authorization headers, etc.)
   },
