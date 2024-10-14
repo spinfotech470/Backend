@@ -56,6 +56,7 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
     credentials: true, // If you need to allow credentials (cookies, authorization headers, etc.)
   },
+  transports: ['websocket'], // Force using WebSocket
 });
 
 // Socket.IO authentication
