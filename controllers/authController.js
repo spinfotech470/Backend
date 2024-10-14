@@ -90,7 +90,7 @@ exports.socialLogin = async (req, res) => {
             await user.save();
         }
 
-        const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET);
+        const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET, { expiresIn: '48h' });
 
         res.json({ token, user });
     } catch (error) {
