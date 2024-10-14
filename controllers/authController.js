@@ -17,29 +17,9 @@ exports.signup = async (req, res) => {
     }
 };
 
-// Login
-exports.login = async (req, res) => {
-    const { email, password } = req.body;
-    try {
-        const user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ message: 'User not found' });
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
-
-        // console.log(user, "Login successfully");
-
-        const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET);
-
-
-        res.json({ user: user.toObject(), token });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
 // Social Login
 exports.socialLogin = async (req, res) => {
+    console.log("process.env.TOKEN_SECRET",process.env.TOKEN_SECRET)
     const { id, email, name, given_name, family_name, picture, verified_email } = req.body;
 
     if (!verified_email) {
@@ -52,9 +32,9 @@ exports.socialLogin = async (req, res) => {
         if (!user) {
             user = new User({
                 email,
-                username: email.replace("@gmail.com", ""),
-                email: email,
-                name: name,
+                username: email.replace("@gmail.com",""),
+                email:email,
+                name:name,
                 socialAccounts: [{
                     provider: 'google',
                     providerId: id,
@@ -64,9 +44,9 @@ exports.socialLogin = async (req, res) => {
                     profilePicture: picture
                 }]
             });
-            const socailUser = await user.save();
+            const  socailUser = await user.save();
 
-            // console.log("socailUser",socailUser)
+            console.log("socailUser",socailUser)
         } else {
             // Check if the social account is already linked
             const accountIndex = user.socialAccounts.findIndex(account => account.provider === 'google' && account.providerId === id);
@@ -90,13 +70,13 @@ exports.socialLogin = async (req, res) => {
             await user.save();
         }
 
-        const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET, { expiresIn: '48h' });
-
+        const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET, { expiresIn: '24h' });
         res.json({ token, user });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
+
 
 // Get User Profile
 exports.getUser = async (req, res) => {

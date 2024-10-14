@@ -1,4 +1,4 @@
-const http = require("http");
+const http = require("https");
 const express = require("express");
 const socketIo = require("socket.io");
 const { Server } = require("socket.io");
@@ -36,7 +36,7 @@ app.use(bodyParser.json());
 // connectDB();
 
 // Init Middleware
-app.use(express.json({ extended: false }));
+// app.use(express.json({ extended: false }));
 
 // Define Routes
 app.use("/api/auth", userRoutes);
