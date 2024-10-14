@@ -1,4 +1,5 @@
-const http = require("https");
+const http = require("http");
+const path = require('path');
 const express = require("express");
 const socketIo = require("socket.io");
 const { Server } = require("socket.io");
@@ -19,6 +20,12 @@ const fileUpload = require("express-fileupload");
 const utility = require("./config/utility");
 
 const app = express();
+
+app.use(express.static(path.join(__dirname, 'build')));
+
+app.get('/*', function(req, res) {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 
 app.use(express.json()); // Parse JSON bodies
 app.use(fileUpload()); // Enable file upload middleware
