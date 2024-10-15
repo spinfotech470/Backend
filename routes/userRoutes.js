@@ -11,6 +11,9 @@ router.post('/blockUnblockUser', blockUnblockUser);
 router.post('/checkUsername', checkUsername);
 router.post('/contactUs', contactUs);
 router.get('/userdashoboard', getUserStatistics);
+router.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+  });
 
 
 
