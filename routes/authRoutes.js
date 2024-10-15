@@ -9,4 +9,5 @@ router.post('/signup', signup);
 router.post('/sociallogin', socialLogin);
 router.get('/profile', auth, getUser);
 router.get('/', getAllQuestions);
+
 module.exports = router;

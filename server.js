@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const socketIo = require('socket.io');
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
@@ -44,6 +45,13 @@ app.use('/api', homeRoutes);
 app.use('/api', chatRoutes);
 app.use('/users', fellowRoutes);
 app.use('/', NewUserRoutes)
+
+
+app.use(express.static(path.join(__dirname, 'build')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 
 // Create HTTP server
 const server = http.createServer(app);
