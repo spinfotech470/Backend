@@ -9,8 +9,5 @@ router.post('/signup', signup);
 router.post('/sociallogin', socialLogin);
 router.get('/profile', auth, getUser);
 router.get('/', getAllQuestions);
-router.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'build', 'index.html'));
-  });
 
 module.exports = router;
