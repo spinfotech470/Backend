@@ -4,7 +4,7 @@ const path = require('path');
 const socketIo = require('socket.io');
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
-const connectDB = require('./config/db');
+const db = require('./config/db');
 require('dotenv').config();
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -33,7 +33,7 @@ app.use(cors({
 app.use(bodyParser.json());
 
 // Connect Database
-connectDB();
+// connectDB();
 
 // Init Middleware
 app.use(express.json({ extended: false }));
@@ -47,12 +47,6 @@ app.use('/api', chatRoutes);
 app.use('/users', fellowRoutes);
 app.use('/', NewUserRoutes)
 
-
-app.use(express.static(path.join(__dirname, 'build')));
-
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
-});
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -264,4 +258,16 @@ io.on('connection', (socket) => {
 
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+
+// server.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+// Ignore DeprecationWarning if necessary
+process.emitWarning = (warning, type) => {
+  if (type !== "DeprecationWarning") {
+    console.warn(warning);
+  }
+};
