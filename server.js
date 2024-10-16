@@ -25,7 +25,7 @@ app.use(express.json()); // Parse JSON bodies
 app.use(fileUpload()); // Enable file upload middleware
 // Middleware
 app.use(cors({
-  origin: '*', // Allow requests from your frontend's origin
+  origin: 'https://youthadda.co', // Allow requests from your frontend's origin
   methods: ['GET', 'POST'],
   credentials: true // If you need to allow credentials (cookies, authorization headers, etc.)
 }));
@@ -56,15 +56,6 @@ app.get('*', (req, res) => {
 // Create HTTP server
 const server = http.createServer(app);
 
-// Init Socket.IO
-// const io = socketIo(server, {
-//   cors: {
-//     origin: '*', // Allow requests from your frontend's origin
-//     methods: ['GET', 'POST'],
-//     credentials: true // If you need to allow credentials (cookies, authorization headers, etc.)
-//   }
-// });
-
 const io = new Server(server, {
   cors: {
     origin: '*', // Allow requests from your frontend's origin
@@ -73,62 +64,17 @@ const io = new Server(server, {
   }
 })
 
-// Socket.IO authentication
 io.use((socket, next) => {
   try {
-    socket.user = (socket.handshake.auth.user);
+    socket.user = socket.handshake.auth.user;
+    if (!socket.user) {
+      return next(new Error('Authentication error'));
+    }
+    next();
   } catch (err) {
-    console.log('Error parsing user:', err);
+    next(new Error('Authentication error'));
   }
-  next();
 });
-
-
-// Socket.IO connection
-// io.on('connection', (socket) => {
-//   // Join a room with the user's username 
-//   socket.join(socket.user.username);``
-
-//   // Mark user as active
-//   User.findOneAndUpdate({ _id: socket.user._id }, { isActive: true }, { new: true })
-//   .then(user => {
-//     if (user) {
-//     } else {
-//     }
-//   })
-//   .catch(err => console.error("Error updating user status:", err));
-
-//   // Handle chat messages
-//   socket.on('message', async (data) => {
-//     const { receiver, message, type} = data;
-//     const newMessage = new Message({
-//       sender:socket.user.username,
-//       receiver,
-//       message,
-//       type,
-//       timestamp: new Date()
-//     });
-//     await newMessage.save();
-//     io.to(receiver).emit('message', newMessage);
-//   });
-
-//   // Handle disconnection
-//   socket.on('disconnect', () => {
-//     // Mark user as inactive
-//     User.findOneAndUpdate(
-//       { _id: socket.user._id },
-//       { isActive: false },
-//       { new: true }
-//     )
-//     .then(user => {
-//       if (user) {
-//       } else {
-//       }
-//     })
-//     .catch(err => console.error("Error updating user status:", err));
-//   });
-
-// });
 
 io.on('connection', (socket) => {
   // Join a room with the user's username
@@ -269,41 +215,7 @@ io.on('connection', (socket) => {
                 }
               } else {
               }
-
-
-              // const usersInCity = await User.find({ city: receiver });
-              // if (usersInCity.length > 0) {
-              //   usersInCity.forEach(async user => {
-              //     if (user.username !== socket.user.username) { // Exclude the sender
-              //       newMessage = new Message({
-              //         sender: socket.user.username,
-              //         receiver: user.username, // Send to each user in the city
-              //         message,
-              //         image: '',
-              //         type,
-              //         isSecret: data.isSecret,
-              //         hideMe: data.hideMe,
-              //         timestamp: new Date()
-              //       });
-
-              //       await newMessage.save();
-              //       io.to(user.username).emit('message', newMessage);
-              //     }
-              //   });
-              // } else {
-              // }
             }
-            // newMessage = new Message({
-            //   sender: socket.user.username,
-            //   receiver,
-            //   message,
-            //   isSecret,
-            //   hideMe,
-            //   type,
-            //   timestamp: new Date()
-            // });
-            // await newMessage.save();
-            // io.to(receiver).emit('message', newMessage);
           }
           else {
             // For non-image messages
