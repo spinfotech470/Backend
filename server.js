@@ -24,11 +24,7 @@ const app = express();
 app.use(express.json()); // Parse JSON bodies
 app.use(fileUpload()); // Enable file upload middleware
 // Middleware
-app.use(cors({
-  origin: '*', // Allow requests from your frontend's origin
-  methods: ['GET', 'POST'],
-  credentials: true // If you need to allow credentials (cookies, authorization headers, etc.)
-}));
+app.use(cors());
 
 app.use(bodyParser.json());
 
@@ -97,6 +93,18 @@ io.on('connection', (socket) => {
   } else {
     console.error("Socket user information is missing");
   }
+
+  socket.on('disconnect', (reason) => {
+    console.log('Socket disconnected: ', reason);
+    if (reason === 'io server disconnect') {
+      // The disconnection was initiated by the server
+      socket.connect();
+    }
+  });
+  
+  socket.on('connect_error', (err) => {
+    console.log('Connection error: ', err.message);
+  });
 
   socket.on('message', async (data) => {
     const { receiver, message, type, reply, replyTo, fileType, isSecret, hideMe, forWhat, image, imageName, imageType } = data;
