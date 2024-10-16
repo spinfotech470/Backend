@@ -63,7 +63,8 @@ const io = new Server(server, {
     methods: ['GET', 'POST'],
     credentials: true // If you need to allow credentials (cookies, authorization headers, etc.)
   },
-  transports: ['websocket', 'polling']
+  transports: ['websocket', 'polling'],
+  path: '/socket.io',
 })
 
 io.use((socket, next) => {
