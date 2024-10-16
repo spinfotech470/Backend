@@ -25,10 +25,11 @@ app.use(express.json()); // Parse JSON bodies
 app.use(fileUpload()); // Enable file upload middleware
 // Middleware
 app.use(cors({
-  origin: 'https://youthadda.co', // Allow requests from your frontend's origin
+  origin: '*', // Allow requests from your frontend's origin
   methods: ['GET', 'POST'],
   credentials: true // If you need to allow credentials (cookies, authorization headers, etc.)
 }));
+
 app.use(bodyParser.json());
 
 // Connect Database
@@ -58,10 +59,11 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: '*', // Allow requests from your frontend's origin
+    origin: 'https://youthadda.co', // Allow requests from your frontend's origin
     methods: ['GET', 'POST'],
     credentials: true // If you need to allow credentials (cookies, authorization headers, etc.)
-  }
+  },
+  transports: ['websocket', 'polling']
 })
 
 io.use((socket, next) => {
