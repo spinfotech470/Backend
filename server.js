@@ -20,6 +20,7 @@ const fileUpload = require('express-fileupload');
 const utility = require("./config/utility")
 
 const app = express();
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 app.use(express.json()); // Parse JSON bodies
 app.use(fileUpload()); // Enable file upload middleware
@@ -45,7 +46,7 @@ app.use('/', NewUserRoutes)
 
 
 // Create HTTP server
-const server = http.createServer(app);
+const server = http.createServer();
 
 const io = new Server(server, {
   cors: {
@@ -269,8 +270,13 @@ const PORT = process.env.PORT || 5000;
 
 // server.listen(PORT, () => console.log(`Server started on port ${PORT}`));
 
-server.listen(PORT, "0.0.0.0", () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+const socketPort = 7000;
+server.listen(socketPort,"0.0.0.0", () => {
+  console.log(`Socket Server is running on port ${socketPort}`);
 });
 
 // Ignore DeprecationWarning if necessary
