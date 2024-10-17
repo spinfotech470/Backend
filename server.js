@@ -46,7 +46,7 @@ app.use('/', NewUserRoutes)
 
 
 // Create HTTP server
-const server = http.createServer();
+const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
@@ -274,10 +274,10 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-const socketPort = 7000;
-server.listen(socketPort,"0.0.0.0", () => {
-  console.log(`Socket Server is running on port ${socketPort}`);
-});
+// const socketPort = 7000;
+// server.listen(socketPort,"0.0.0.0", () => {
+//   console.log(`Socket Server is running on port ${socketPort}`);
+// });
 
 // Ignore DeprecationWarning if necessary
 process.emitWarning = (warning, type) => {
