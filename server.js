@@ -48,15 +48,24 @@ app.use('/', NewUserRoutes)
 // Create HTTP server
 const server = http.createServer(app);
 
+
 const io = new Server(server, {
   cors: {
     origin: '*', // Allow requests from your frontend's origin
     methods: ['GET', 'POST'],
     credentials: true // If you need to allow credentials (cookies, authorization headers, etc.)
   },
+  pingInterval: 10000, // adjust ping interval for WebSocket
+  pingTimeout: 5000, // adjust timeout
   transports: ['websocket', 'polling'],
   path: '/socket.io',
 })
+
+// const io = require('socket.io')(server, {
+//   pingInterval: 10000, // adjust ping interval for WebSocket
+//   pingTimeout: 5000, // adjust timeout
+//   transports: ['websocket'],
+// });
 
 io.use((socket, next) => {
   try {
